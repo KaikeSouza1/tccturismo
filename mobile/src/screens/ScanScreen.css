@@ -51,27 +51,93 @@
   width: 240px;
   height: 240px;
   border-radius: var(--radius-lg);
-  border: 3px solid rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.35);
   box-shadow: 0 0 0 999px rgba(10, 20, 35, 0.35);
   position: relative;
+  overflow: hidden;
 }
 
-.scan-camera__frame::before,
-.scan-camera__frame::after {
-  content: "";
+.scan-camera__corner {
   position: absolute;
-  width: 26px;
-  height: 26px;
-  border-color: var(--color-blue-300);
+  width: 30px;
+  height: 30px;
+  border: 3px solid var(--color-blue-300);
+}
+
+.scan-camera__corner--tl {
+  top: -1px;
+  left: -1px;
+  border-right: none;
+  border-bottom: none;
+  border-radius: var(--radius-lg) 0 0 0;
+}
+
+.scan-camera__corner--tr {
+  top: -1px;
+  right: -1px;
+  border-left: none;
+  border-bottom: none;
+  border-radius: 0 var(--radius-lg) 0 0;
+}
+
+.scan-camera__corner--bl {
+  bottom: -1px;
+  left: -1px;
+  border-right: none;
+  border-top: none;
+  border-radius: 0 0 0 var(--radius-lg);
+}
+
+.scan-camera__corner--br {
+  bottom: -1px;
+  right: -1px;
+  border-left: none;
+  border-top: none;
+  border-radius: 0 0 var(--radius-lg) 0;
+}
+
+.scan-camera__scanline {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--color-blue-300) 25%, var(--color-blue-300) 75%, transparent);
+  box-shadow: 0 0 8px 1px rgba(127, 192, 238, 0.7);
+  animation: scan-sweep 2.4s ease-in-out infinite;
+}
+
+@keyframes scan-sweep {
+  0% {
+    top: 8%;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  50% {
+    top: 88%;
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    top: 8%;
+    opacity: 0;
+  }
 }
 
 .scan-camera__hint {
-  color: #fff;
-  font-size: 14.5px;
-  font-weight: 600;
+  background: rgba(255, 253, 247, 0.94);
+  color: var(--color-ink-900);
+  font-family: var(--font-hand);
+  font-size: 17px;
+  font-weight: 700;
   text-align: center;
-  padding: 0 var(--space-6);
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  padding: 8px 20px;
+  border-radius: var(--radius-pill);
+  max-width: 78%;
 }
 
 .scan-camera__recognized {

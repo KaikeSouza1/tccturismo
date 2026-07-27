@@ -130,6 +130,15 @@ export function HomeScreen() {
   // indiferenciada — com mais de um municipio na plataforma, misturar tudo
   // numa lista so deixa de fazer sentido para o turista.
   const chapters = useMemo(() => {
+    // A contagem exibida usa TODOS os atrativos da organizacao (a lista
+    // completa), nao so os que sobraram em "rest" — senao a organizacao dona
+    // do atrativo "destaque" (o mais perto de voce) aparece com 1 a menos do
+    // que ela realmente tem.
+    const totalByOrg = new Map<string, number>();
+    for (const attraction of attractions) {
+      totalByOrg.set(attraction.organizationId, (totalByOrg.get(attraction.organizationId) ?? 0) + 1);
+    }
+
     const groups = new Map<string, AttractionWithDistance[]>();
     for (const attraction of rest) {
       const key = attraction.organizationId;
@@ -142,10 +151,11 @@ export function HomeScreen() {
         organizationId,
         name: items[0].organizationName,
         items,
+        total: totalByOrg.get(organizationId) ?? items.length,
         minDistance: Math.min(...items.map((item) => item.distance ?? Infinity)),
       }))
       .sort((a, b) => a.minDistance - b.minDistance);
-  }, [rest]);
+  }, [attractions, rest]);
 
   return (
     <AppShell>
@@ -241,7 +251,7 @@ export function HomeScreen() {
                   </span>
                   <h3 className="home-chapter__title">{chapter.name}</h3>
                   <span className="home-chapter__count">
-                    {chapter.items.length} {chapter.items.length > 1 ? "atrativos" : "atrativo"}
+                    {chapter.total} {chapter.total > 1 ? "atrativos" : "atrativo"}
                   </span>
                   <ChevronRightIcon size={16} />
                 </div>

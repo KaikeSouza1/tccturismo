@@ -136,7 +136,13 @@ export function ScanScreen() {
           <div className="scan-camera">
             <video ref={videoRef} className="scan-camera__video" playsInline muted />
             <div className="scan-camera__overlay">
-              <div className="scan-camera__frame" />
+              <div className="scan-camera__frame">
+                <span className="scan-camera__corner scan-camera__corner--tl" />
+                <span className="scan-camera__corner scan-camera__corner--tr" />
+                <span className="scan-camera__corner scan-camera__corner--bl" />
+                <span className="scan-camera__corner scan-camera__corner--br" />
+                {state.kind === "scanning" && ready ? <span className="scan-camera__scanline" /> : null}
+              </div>
               <p className="scan-camera__hint">
                 {state.kind === "processing"
                   ? "Confirmando sua localizacao..."

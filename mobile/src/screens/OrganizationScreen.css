@@ -1,8 +1,9 @@
 .org-header {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding: 0 var(--space-5) var(--space-3);
+  padding: var(--space-2) var(--space-5) var(--space-3);
 }
 
 .org-header__pin {
@@ -38,11 +39,15 @@
 }
 
 .org-list-card {
+  cursor: pointer;
+}
+
+.org-list-card .journal-card__surface {
   display: flex;
   align-items: center;
   gap: var(--space-4);
   text-align: left;
-  cursor: pointer;
+  padding: var(--space-3) var(--space-4);
 }
 
 .org-list-card:active {
