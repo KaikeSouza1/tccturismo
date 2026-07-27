@@ -29,7 +29,7 @@ export function Sidebar() {
           <Compass size={18} strokeWidth={2} />
         </span>
         <div className="sidebar__brand-text">
-          <strong>Trilha Local</strong>
+          <strong>TuriStar</strong>
           <span>{isPlatformAdmin ? "administracao da plataforma" : "painel administrativo"}</span>
         </div>
       </div>

@@ -4,8 +4,6 @@ import { useAuth } from "../lib/auth-context";
 import { ApiError } from "../lib/api";
 import { Button } from "../components/ui/Button";
 import { TextField } from "../components/ui/TextField";
-import { InkStamp } from "../components/ui/InkStamp";
-import { CompassIcon } from "../icons";
 import "./AuthScreens.css";
 
 export function LoginScreen() {
@@ -33,15 +31,8 @@ export function LoginScreen() {
   return (
     <div className="auth-screen">
       <div className="auth-cover">
-        <InkStamp variant="ink" size={64} rotate={9} label="UNIAO DA VITORIA">
-          <CompassIcon size={22} />
-        </InkStamp>
-        <h1 className="auth-cover__title">
-          Trilha
-          <br />
-          Local
-        </h1>
-        <p className="auth-cover__tagline">um caderno de bordo para suas aventuras pela cidade</p>
+        <h1 className="auth-cover__title">TuriStar</h1>
+        <p className="auth-cover__tagline">um caderno de bordo para suas aventuras</p>
       </div>
 
       <form className="auth-form" onSubmit={handleSubmit}>

@@ -17,9 +17,9 @@
 }
 
 .auth-cover__title {
-  font-size: 68px;
+  font-size: clamp(40px, 12vw, 56px);
   font-weight: 900;
-  line-height: 0.86;
+  line-height: 1;
   letter-spacing: -0.5px;
   color: var(--color-ink-stamp);
   margin-top: var(--space-4);

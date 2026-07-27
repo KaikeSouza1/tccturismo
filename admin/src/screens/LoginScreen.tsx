@@ -33,11 +33,7 @@ export function LoginScreen() {
         <div className="login-cover__mark">
           <Compass size={26} strokeWidth={2} />
         </div>
-        <h1 className="login-cover__title">
-          Trilha
-          <br />
-          Local
-        </h1>
+        <h1 className="login-cover__title">TuriStar</h1>
         <p className="login-cover__tagline">
           painel administrativo — gerencie atrativos, conquistas e acompanhe as visitas registradas
           pelos turistas da sua organizacao.

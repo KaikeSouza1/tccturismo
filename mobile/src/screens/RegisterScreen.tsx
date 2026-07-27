@@ -37,11 +37,7 @@ export function RegisterScreen() {
         <InkStamp variant="success" size={64} rotate={-7} label="NOVO EXPLORADOR">
           <RouteIcon size={22} />
         </InkStamp>
-        <h1 className="auth-cover__title">
-          Trilha
-          <br />
-          Local
-        </h1>
+        <h1 className="auth-cover__title">TuriStar</h1>
         <p className="auth-cover__tagline">comece hoje seu proprio caderno de viagem</p>
       </div>
 

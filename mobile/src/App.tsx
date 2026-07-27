@@ -24,7 +24,7 @@ function SplashScreen() {
         fontSize: 20,
       }}
     >
-      Trilha Local
+      TuriStar
     </div>
   );
 }
