@@ -41,6 +41,7 @@ export interface VisitRecord {
   latitude: number;
   longitude: number;
   distance_meters: number;
+  photo_key: string | null;
   client_recorded_at: Date;
   synced_at: Date;
   created_at: Date;

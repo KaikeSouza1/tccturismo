@@ -28,6 +28,7 @@ function toPublicVisit(visit: VisitRecord & { attraction_name?: string }) {
     latitude: visit.latitude,
     longitude: visit.longitude,
     distanceMeters: Math.round(visit.distance_meters),
+    hasPhoto: visit.photo_key !== null,
     clientRecordedAt: visit.client_recorded_at,
     createdAt: visit.created_at,
   };
@@ -99,6 +100,20 @@ export async function listMyVisits(userId: string) {
     [userId]
   );
   return result.rows.map(toPublicVisit);
+}
+
+export async function getOwnedVisit(userId: string, visitId: string) {
+  const result = await query<VisitRecord>("SELECT * FROM visits WHERE id = $1", [visitId]);
+  const visit = result.rows[0];
+  if (!visit || visit.user_id !== userId) {
+    throw ApiError.notFound("Visita nao encontrada");
+  }
+  return visit;
+}
+
+export async function setVisitPhotoKey(userId: string, visitId: string, photoKey: string) {
+  await getOwnedVisit(userId, visitId);
+  await query("UPDATE visits SET photo_key = $1 WHERE id = $2", [photoKey, visitId]);
 }
 
 export async function listVisits(filter: ListVisitsFilter) {

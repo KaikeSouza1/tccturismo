@@ -4,14 +4,16 @@ import { useAuth } from "../lib/auth-context";
 import { apiRequest } from "../lib/api";
 import { useApiState } from "../lib/useApiState";
 import { distanceInMeters } from "../lib/geo";
+import { formatVisitDate } from "../lib/dates";
 import type { Attraction, User, Visit } from "../types";
 import { AppShell } from "../components/layout/AppShell";
 import { ScreenHeader } from "../components/layout/ScreenHeader";
 import { JournalCard } from "../components/ui/JournalCard";
 import { InkStamp } from "../components/ui/InkStamp";
 import { Button } from "../components/ui/Button";
+import { AuthedImage } from "../components/ui/AuthedImage";
 import { ExpeditionMap, type MapAttraction } from "../components/ui/ExpeditionMap";
-import { LogOutIcon, MedalIcon, TrophyIcon, UserIcon } from "../icons";
+import { CameraIcon, LogOutIcon, MedalIcon, PinIcon, TrophyIcon, UserIcon } from "../icons";
 import "./ProfileScreen.css";
 
 export function ProfileScreen() {
@@ -25,6 +27,7 @@ export function ProfileScreen() {
   const [mapAttractions, setMapAttractions] = useState<MapAttraction[]>([]);
   const [trailKm, setTrailKm] = useState(0);
   const [visitedCount, setVisitedCount] = useState(0);
+  const [recentVisits, setRecentVisits] = useState<Visit[]>([]);
 
   const profile = data ?? user;
 
@@ -67,6 +70,8 @@ export function ProfileScreen() {
       }
       setTrailKm(total / 1000);
       setVisitedCount(orderedAttractions.length);
+      // "/visits/me" ja vem ordenado do mais recente para o mais antigo
+      setRecentVisits(visits);
     })();
   }, [token]);
 
@@ -113,6 +118,35 @@ export function ProfileScreen() {
                   : "carimbe seu primeiro atrativo para comecar a desenhar seu mapa"}
             </p>
           </JournalCard>
+        ) : null}
+
+        {recentVisits.length > 0 ? (
+          <section className="profile-visits">
+            <h3 className="profile-visits__heading">minhas visitas</h3>
+            <div className="profile-visits__list">
+              {recentVisits.map((visit) => (
+                <JournalCard key={visit.id} tornEdge="none" className="profile-visits__entry">
+                  <div className="profile-visits__thumb">
+                    {visit.hasPhoto ? (
+                      <AuthedImage path={`/visits/${visit.id}/photo`} alt="" />
+                    ) : (
+                      <PinIcon size={18} />
+                    )}
+                  </div>
+                  <div className="profile-visits__text">
+                    <strong>{visit.attractionName}</strong>
+                    <span>{formatVisitDate(visit.clientRecordedAt)}</span>
+                  </div>
+                  <span className="profile-visits__distance">{Math.round(visit.distanceMeters)}m</span>
+                  {visit.hasPhoto ? (
+                    <span className="profile-visits__photo-badge">
+                      <CameraIcon size={12} />
+                    </span>
+                  ) : null}
+                </JournalCard>
+              ))}
+            </div>
+          </section>
         ) : null}
 
         <div className="profile-menu">

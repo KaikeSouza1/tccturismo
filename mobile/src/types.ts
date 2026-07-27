@@ -28,6 +28,7 @@ export interface Visit {
   latitude: number;
   longitude: number;
   distanceMeters: number;
+  hasPhoto: boolean;
   clientRecordedAt: string;
   createdAt: string;
 }

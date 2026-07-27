@@ -5,6 +5,7 @@ import { apiRequest, attractionGalleryImageUrl } from "../lib/api";
 import { clearWatch, getCurrentPosition, watchPosition } from "../lib/geolocation";
 import { distanceInMeters } from "../lib/geo";
 import { getWalkingRoute } from "../lib/osrm";
+import { formatVisitDate } from "../lib/dates";
 import { haptics } from "../lib/haptics";
 import type { Attraction, Visit } from "../types";
 import { AppShell } from "../components/layout/AppShell";
@@ -30,13 +31,6 @@ function formatDistance(meters: number): string {
 
 function ordinalVisit(n: number): string {
   return `${n}ª visita`;
-}
-
-function formatVisitDate(iso: string): string {
-  const date = new Date(iso);
-  const day = date.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
-  const time = date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-  return `${day}, ${time}`;
 }
 
 export function AttractionDetailScreen() {

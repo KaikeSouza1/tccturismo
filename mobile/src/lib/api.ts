@@ -49,3 +49,32 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   return data as T;
 }
+
+export async function apiUploadBlob<T>(
+  path: string,
+  fieldName: string,
+  blob: Blob,
+  token: string | null
+): Promise<T> {
+  const formData = new FormData();
+  formData.append(fieldName, blob, "foto.jpg");
+
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const response = await fetch(`${API_URL}${path}`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new ApiError(response.status, data.error ?? "Erro inesperado");
+  }
+  return data as T;
+}
+
+export function apiUrl(path: string): string {
+  return `${API_URL}${path}`;
+}

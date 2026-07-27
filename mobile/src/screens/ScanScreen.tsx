@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from "react";
+import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { useAuth } from "../lib/auth-context";
-import { apiRequest, ApiError } from "../lib/api";
+import { apiRequest, apiUploadBlob, ApiError } from "../lib/api";
 import { useQrScanner } from "../lib/useQrScanner";
 import { getCurrentPosition } from "../lib/geolocation";
 import { distanceInMeters } from "../lib/geo";
@@ -12,8 +13,10 @@ import { Button } from "../components/ui/Button";
 import { AchievementCelebration } from "../components/ui/AchievementCelebration";
 import { InkStamp } from "../components/ui/InkStamp";
 import { Polaroid } from "../components/ui/Polaroid";
-import { CheckIcon, PinIcon, XIcon } from "../icons";
+import { CameraIcon, CheckIcon, PinIcon, XIcon } from "../icons";
 import "./ScanScreen.css";
+
+type PhotoStatus = "idle" | "capturing" | "uploading" | "done" | "error";
 
 type ScanState =
   | { kind: "scanning" }
@@ -36,7 +39,33 @@ function parseQrPayload(raw: string): { attractionId?: string; qrToken: string }
 export function ScanScreen() {
   const { token } = useAuth();
   const [state, setState] = useState<ScanState>({ kind: "scanning" });
+  const [photoStatus, setPhotoStatus] = useState<PhotoStatus>("idle");
   const processingRef = useRef(false);
+
+  async function handleTakePhoto() {
+    if (state.kind !== "success") return;
+    setPhotoStatus("capturing");
+    try {
+      const photo = await Camera.getPhoto({
+        resultType: CameraResultType.DataUrl,
+        source: CameraSource.Camera,
+        quality: 70,
+        allowEditing: false,
+      });
+      if (!photo.dataUrl) {
+        setPhotoStatus("idle");
+        return;
+      }
+      setPhotoStatus("uploading");
+      const blob = await (await fetch(photo.dataUrl)).blob();
+      await apiUploadBlob(`/visits/${state.visit.id}/photo`, "photo", blob, token);
+      setPhotoStatus("done");
+    } catch {
+      // usuario cancelou a captura ou o upload falhou — a visita ja foi
+      // carimbada normalmente por localizacao, a foto e so um extra
+      setPhotoStatus((prev) => (prev === "uploading" ? "error" : "idle"));
+    }
+  }
 
   const handleDetected = useCallback(
     async (raw: string, frameDataUrl: string) => {
@@ -126,6 +155,7 @@ export function ScanScreen() {
 
   function reset() {
     processingRef.current = false;
+    setPhotoStatus("idle");
     setState({ kind: "scanning" });
   }
 
@@ -134,7 +164,15 @@ export function ScanScreen() {
       <div className="scan-screen">
         {state.kind === "scanning" || state.kind === "processing" ? (
           <div className="scan-camera">
-            <video ref={videoRef} className="scan-camera__video" playsInline muted />
+            <video
+              ref={videoRef}
+              className="scan-camera__video"
+              playsInline
+              muted
+              autoPlay
+              disablePictureInPicture
+              controlsList="nodownload noplaybackrate nofullscreen"
+            />
             <div className="scan-camera__overlay">
               <div className="scan-camera__frame">
                 <span className="scan-camera__corner scan-camera__corner--tl" />
@@ -185,6 +223,30 @@ export function ScanScreen() {
                 <p className="scan-result__detail scan-result__detail--hand">
                   distancia confirmada: {state.visit.distanceMeters}m do ponto oficial
                 </p>
+
+                {photoStatus === "done" ? (
+                  <p className="scan-result__photo-note pop-in">
+                    <CameraIcon size={15} /> foto salva no seu diario de bordo
+                  </p>
+                ) : (
+                  <button
+                    className="scan-result__photo-btn"
+                    type="button"
+                    onClick={handleTakePhoto}
+                    disabled={photoStatus === "capturing" || photoStatus === "uploading"}
+                  >
+                    <CameraIcon size={16} />
+                    {photoStatus === "uploading"
+                      ? "salvando foto..."
+                      : photoStatus === "error"
+                        ? "tentar de novo"
+                        : "tirar uma foto da visita"}
+                  </button>
+                )}
+                {photoStatus === "error" ? (
+                  <p className="scan-result__detail">nao foi possivel salvar a foto agora — sua visita ja esta carimbada normalmente.</p>
+                ) : null}
+
                 <Button fullWidth onClick={reset}>
                   Escanear outro atrativo
                 </Button>

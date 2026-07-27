@@ -33,10 +33,20 @@ export function useQrScanner({ active, onDetected }: UseQrScannerOptions) {
         }
         streamRef.current = stream;
         if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          await videoRef.current.play();
+          const video = videoRef.current;
+          video.srcObject = stream;
+          await video.play();
           setReady(true);
           tick();
+
+          // Alguns WebViews Android pausam a tag <video> sozinhos (perda de
+          // foco, economia de energia, etc.) e mostram o icone nativo de
+          // play por cima da imagem parada. Como isso e so uma pre-visualizacao
+          // de camera, nao um video de verdade, ela deve simplesmente retomar
+          // sozinha sempre que isso acontecer enquanto a tela de scan estiver ativa.
+          video.onpause = () => {
+            if (!cancelled) video.play().catch(() => {});
+          };
         }
       } catch {
         setError("Nao foi possivel acessar a camera. Verifique as permissoes do navegador/app.");
