@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from "./lib/auth-context";
 import { LoginScreen } from "./screens/LoginScreen";
 import { RegisterScreen } from "./screens/RegisterScreen";
 import { HomeScreen } from "./screens/HomeScreen";
+import { OrganizationScreen } from "./screens/OrganizationScreen";
 import { AttractionDetailScreen } from "./screens/AttractionDetailScreen";
 import { ScanScreen } from "./screens/ScanScreen";
 import { AchievementsScreen } from "./screens/AchievementsScreen";
@@ -75,6 +76,14 @@ function AppRoutes() {
         element={
           <RequireAuth>
             <AttractionDetailScreen />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/organizations/:organizationId"
+        element={
+          <RequireAuth>
+            <OrganizationScreen />
           </RequireAuth>
         }
       />

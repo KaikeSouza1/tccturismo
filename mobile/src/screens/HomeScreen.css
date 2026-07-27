@@ -162,6 +162,12 @@
   gap: var(--space-2);
   padding-bottom: var(--space-2);
   border-bottom: 1px dashed var(--color-line);
+  cursor: pointer;
+  color: var(--color-ink-300);
+}
+
+.home-chapter__header:active {
+  opacity: 0.7;
 }
 
 .home-chapter__pin {

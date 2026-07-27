@@ -104,7 +104,7 @@ export function ProfileScreen() {
         {mapAttractions.length > 0 ? (
           <JournalCard tilt={0.6} tornEdge="top" className="profile-map">
             <h3 className="profile-map__heading">seu mapa de expedicao</h3>
-            <ExpeditionMap attractions={mapAttractions} width={300} height={220} />
+            <ExpeditionMap attractions={mapAttractions} height={220} />
             <p className="profile-map__legend">
               {visitedCount > 1
                 ? `voce ja percorreu ~${trailKm.toFixed(1)}km entre ${visitedCount} pontos da cidade`

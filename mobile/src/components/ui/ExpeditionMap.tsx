@@ -1,93 +1,82 @@
-import { createProjection, seededJitter, type GeoPoint } from "../../lib/map-projection";
+import { useEffect, useMemo, useRef } from "react";
+import L from "leaflet";
+import { MapContainer, Marker, Polyline, TileLayer, useMap } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 import "./ExpeditionMap.css";
 
-export interface MapAttraction extends GeoPoint {
+export interface MapAttraction {
   id: string;
   name: string;
+  latitude: number;
+  longitude: number;
   /** Ordem cronologica da visita (1 = primeira). Undefined = ainda nao visitado. */
   visitOrder?: number;
 }
 
 interface ExpeditionMapProps {
   attractions: MapAttraction[];
-  width?: number;
   height?: number;
   onSelectAttraction?: (id: string) => void;
 }
 
-function buildTrailPath(points: { x: number; y: number }[]): string {
-  if (points.length < 2) return "";
-  let d = `M ${points[0].x} ${points[0].y}`;
-  for (let i = 1; i < points.length; i++) {
-    const a = points[i - 1];
-    const b = points[i];
-    const mx = (a.x + b.x) / 2;
-    const my = (a.y + b.y) / 2;
-    const dx = b.x - a.x;
-    const dy = b.y - a.y;
-    const len = Math.hypot(dx, dy) || 1;
-    const nx = -dy / len;
-    const ny = dx / len;
-    const jitter = (seededJitter(i * 7.13) - 0.5) * 18;
-    d += ` Q ${mx + nx * jitter} ${my + ny * jitter} ${b.x} ${b.y}`;
-  }
-  return d;
+function pinIcon(visited: boolean, visitOrder?: number) {
+  const html = visited
+    ? `<div class="expedition-map__pin expedition-map__pin--visited">${visitOrder}</div>`
+    : `<div class="expedition-map__pin expedition-map__pin--outline"></div>`;
+  return L.divIcon({ html, className: "expedition-map__icon", iconSize: [22, 22], iconAnchor: [11, 11] });
 }
 
-export function ExpeditionMap({ attractions, width = 320, height = 240, onSelectAttraction }: ExpeditionMapProps) {
-  const project = createProjection(attractions, width, height);
-  const positioned = attractions.map((a) => ({ ...a, ...project(a) }));
-  const visitedOrdered = positioned
-    .filter((a) => a.visitOrder !== undefined)
-    .sort((a, b) => (a.visitOrder ?? 0) - (b.visitOrder ?? 0));
-  const trailPath = buildTrailPath(visitedOrdered);
+function FitBounds({ attractions }: { attractions: MapAttraction[] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (attractions.length === 0) return;
+    const bounds = L.latLngBounds(attractions.map((a) => [a.latitude, a.longitude]));
+    map.fitBounds(bounds, { padding: [28, 28], maxZoom: 16 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attractions.length]);
+  return null;
+}
+
+export function ExpeditionMap({ attractions, height = 240, onSelectAttraction }: ExpeditionMapProps) {
+  const mapRef = useRef<L.Map | null>(null);
+  const visitedOrdered = useMemo(
+    () =>
+      attractions
+        .filter((a) => a.visitOrder !== undefined)
+        .sort((a, b) => (a.visitOrder ?? 0) - (b.visitOrder ?? 0))
+        .map((a) => [a.latitude, a.longitude] as [number, number]),
+    [attractions]
+  );
+  const center = useMemo<[number, number]>(() => {
+    if (attractions.length === 0) return [0, 0];
+    return [attractions[0].latitude, attractions[0].longitude];
+  }, [attractions]);
 
   return (
-    <svg
-      className="expedition-map"
-      viewBox={`0 0 ${width} ${height}`}
-      width="100%"
-      height={height}
-      role="img"
-      aria-label="Mapa dos atrativos e da sua trilha de visitas"
-    >
-      <rect width={width} height={height} rx={16} className="expedition-map__bg" />
-
-      {[0.18, 0.34, 0.52, 0.7].map((r, i) => (
-        <circle
-          key={i}
-          cx={width * 0.22}
-          cy={height * 0.28}
-          r={Math.max(width, height) * r}
-          className="expedition-map__contour"
-        />
-      ))}
-
-      {trailPath ? <path d={trailPath} className="expedition-map__trail" /> : null}
-
-      {positioned.map((a) => {
-        const visited = a.visitOrder !== undefined;
-        return (
-          <g
+    <div className="expedition-map" style={{ width: "100%", height }}>
+      <MapContainer
+        ref={mapRef}
+        center={center}
+        zoom={14}
+        zoomControl={false}
+        scrollWheelZoom={false}
+        attributionControl={false}
+        style={{ width: "100%", height: "100%", borderRadius: 16 }}
+      >
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        {visitedOrdered.length > 1 ? (
+          <Polyline positions={visitedOrdered} pathOptions={{ color: "#279A62", weight: 3, dashArray: "1 8", lineCap: "round" }} />
+        ) : null}
+        {attractions.map((a) => (
+          <Marker
             key={a.id}
-            transform={`translate(${a.x}, ${a.y})`}
-            className={`expedition-map__pin ${visited ? "expedition-map__pin--visited" : ""}`}
-            onClick={() => onSelectAttraction?.(a.id)}
-          >
-            {visited ? (
-              <>
-                <circle r={9} className="expedition-map__pin-fill" />
-                <circle r={9} className="expedition-map__pin-ring" />
-                <text y={3.5} textAnchor="middle" className="expedition-map__pin-number">
-                  {a.visitOrder}
-                </text>
-              </>
-            ) : (
-              <circle r={7} className="expedition-map__pin-outline" />
-            )}
-          </g>
-        );
-      })}
-    </svg>
+            position={[a.latitude, a.longitude]}
+            icon={pinIcon(a.visitOrder !== undefined, a.visitOrder)}
+            eventHandlers={{ click: () => onSelectAttraction?.(a.id) }}
+          />
+        ))}
+        <FitBounds attractions={attractions} />
+      </MapContainer>
+    </div>
   );
 }

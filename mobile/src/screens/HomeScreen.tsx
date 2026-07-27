@@ -15,7 +15,7 @@ import { WashiTape } from "../components/ui/WashiTape";
 import { Polaroid } from "../components/ui/Polaroid";
 import { ExpeditionMap, type MapAttraction } from "../components/ui/ExpeditionMap";
 import { AttractionArt } from "../components/ui/AttractionArt";
-import { PinIcon, RouteIcon } from "../icons";
+import { ChevronRightIcon, PinIcon, RouteIcon } from "../icons";
 import "./HomeScreen.css";
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -132,14 +132,15 @@ export function HomeScreen() {
   const chapters = useMemo(() => {
     const groups = new Map<string, AttractionWithDistance[]>();
     for (const attraction of rest) {
-      const key = attraction.organizationName;
+      const key = attraction.organizationId;
       const list = groups.get(key) ?? [];
       list.push(attraction);
       groups.set(key, list);
     }
     return [...groups.entries()]
-      .map(([name, items]) => ({
-        name,
+      .map(([organizationId, items]) => ({
+        organizationId,
+        name: items[0].organizationName,
         items,
         minDistance: Math.min(...items.map((item) => item.distance ?? Infinity)),
       }))
@@ -181,7 +182,6 @@ export function HomeScreen() {
           <JournalCard tilt={0} tornEdge="top" className="home-map-card">
             <ExpeditionMap
               attractions={mapAttractions}
-              width={300}
               height={230}
               onSelectAttraction={(id) => navigate(`/attractions/${id}`)}
             />
@@ -225,9 +225,17 @@ export function HomeScreen() {
               <section
                 className="home-chapter rise-in"
                 style={{ animationDelay: `${Math.min(chapterIndex + 1, 4) * 90}ms` }}
-                key={chapter.name}
+                key={chapter.organizationId}
               >
-                <div className="home-chapter__header">
+                <div
+                  className="home-chapter__header"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => navigate(`/organizations/${chapter.organizationId}`)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") navigate(`/organizations/${chapter.organizationId}`);
+                  }}
+                >
                   <span className="home-chapter__pin">
                     <PinIcon size={13} />
                   </span>
@@ -235,6 +243,7 @@ export function HomeScreen() {
                   <span className="home-chapter__count">
                     {chapter.items.length} {chapter.items.length > 1 ? "atrativos" : "atrativo"}
                   </span>
+                  <ChevronRightIcon size={16} />
                 </div>
 
                 <div className="home-chapter__shelf">
