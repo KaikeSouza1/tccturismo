@@ -7,9 +7,10 @@ interface ModalProps {
   onClose: () => void;
   children: ReactNode;
   width?: number;
+  footer?: ReactNode;
 }
 
-export function Modal({ title, onClose, children, width = 560 }: ModalProps) {
+export function Modal({ title, onClose, children, width = 560, footer }: ModalProps) {
   return (
     <div className="modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal" style={{ maxWidth: width }}>
@@ -20,6 +21,7 @@ export function Modal({ title, onClose, children, width = 560 }: ModalProps) {
           </button>
         </header>
         <div className="modal__body">{children}</div>
+        {footer ? <footer className="modal__footer">{footer}</footer> : null}
       </div>
     </div>
   );

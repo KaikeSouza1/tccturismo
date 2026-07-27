@@ -223,219 +223,231 @@ export function AttractionFormModal({
   }
 
   return (
-    <Modal title={attraction ? "Editar atrativo" : "Novo atrativo"} onClose={onClose} width={640}>
-      <div className="form-section-title">
-        <Info size={15} />
-        <span>informacoes</span>
-      </div>
-      <div className="form-grid">
-        <div className="field form-grid--full">
-          <label>nome</label>
-          <input
-            className="input"
-            value={form.name}
-            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-            placeholder="Ex: Praca Coronel Amazonas"
-          />
-        </div>
-
-        <div className="field form-grid--full">
-          <label>descricao</label>
-          <textarea
-            className="textarea"
-            value={form.description}
-            onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-            placeholder="Um breve resumo para o turista"
-          />
-        </div>
-
-        <div className="field">
-          <label>categoria</label>
-          <select
-            className="select"
-            value={form.category}
-            onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+    <Modal
+      title={attraction ? "Editar atrativo" : "Novo atrativo"}
+      onClose={onClose}
+      width={1080}
+      footer={
+        <>
+          <button className="btn btn--ghost" onClick={onClose} type="button" disabled={saving}>
+            Cancelar
+          </button>
+          <button
+            className="btn btn--primary"
+            onClick={handleSubmit}
+            type="button"
+            disabled={saving || !form.name.trim()}
           >
-            {Object.entries(CATEGORY_LABEL).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </div>
+            {saving ? "salvando..." : attraction ? "Salvar alteracoes" : "Criar atrativo"}
+          </button>
+        </>
+      }
+    >
+      {error ? <p className="banner banner--error" style={{ marginBottom: 16 }}>{error}</p> : null}
 
-        <div className="field">
-          <label>raio de deteccao (metros)</label>
-          <input
-            className="input"
-            type="number"
-            min={10}
-            max={2000}
-            value={form.radiusMeters}
-            onChange={(e) => setForm((f) => ({ ...f, radiusMeters: Number(e.target.value) }))}
-          />
-        </div>
-
-        {attraction ? (
-          <div className="field">
-            <label>status</label>
-            <select
-              className="select"
-              value={form.active ? "active" : "inactive"}
-              onChange={(e) => setForm((f) => ({ ...f, active: e.target.value === "active" }))}
-            >
-              <option value="active">ativo</option>
-              <option value="inactive">inativo</option>
-            </select>
+      <div className="attraction-form-columns">
+        <div className="attraction-form-col">
+          <div className="form-section-title">
+            <Info size={15} />
+            <span>informacoes</span>
           </div>
-        ) : null}
-
-        <div className="form-section-title form-grid--full">
-          <MapPin size={15} />
-          <span>localizacao</span>
-        </div>
-        <div className="field form-grid--full">
-          <span className="field__hint">
-            clique no mapa ou arraste o marcador para ajustar — o circulo azul mostra o raio de deteccao
-            usado para validar que o turista estava no local na hora de carimbar
-          </span>
-          <MapPicker
-            latitude={form.latitude}
-            longitude={form.longitude}
-            radiusMeters={form.radiusMeters}
-            onChange={(latitude, longitude) => setForm((f) => ({ ...f, latitude, longitude }))}
-          />
-        </div>
-
-        {attraction ? (
-          <div className="form-grid--full">
-            <ReportCard pin="blue" className="attraction-photos-card">
-              <h4 className="attraction-photos-card__title">
-                <Images size={15} /> fotos do atrativo
-              </h4>
-              <p className="field__hint">
-                ate {MAX_IMAGES} fotos — a marcada com a estrela e a capa usada na lista do turista. passe o
-                mouse sobre uma foto para definir como capa ou remover.
-              </p>
-              <div className="attraction-gallery">
-                {images.map((image, index) => (
-                  <div
-                    key={image.id}
-                    className={`attraction-gallery__item${index === 0 ? " attraction-gallery__item--cover" : ""}`}
-                  >
-                    <img src={galleryImageUrl(attraction.id, image.id)} alt="" />
-                    {index === 0 ? <span className="attraction-gallery__cover-badge">capa</span> : null}
-                    <div className="attraction-gallery__item-actions">
-                      {index !== 0 ? (
-                        <button type="button" title="definir como capa" onClick={() => handleSetCover(image.id)}>
-                          <Star size={12} />
-                        </button>
-                      ) : null}
-                      <button type="button" title="remover" onClick={() => handleDeleteImage(image.id)}>
-                        <X size={12} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-                {images.length < MAX_IMAGES ? (
-                  <button
-                    type="button"
-                    className="attraction-gallery__add"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploadingImage}
-                  >
-                    {uploadingImage ? (
-                      <span>enviando...</span>
-                    ) : (
-                      <>
-                        <Plus size={20} />
-                        <span>{images.length === 0 ? "enviar foto" : "adicionar"}</span>
-                      </>
-                    )}
-                  </button>
-                ) : null}
-              </div>
+          <div className="form-grid">
+            <div className="field form-grid--full">
+              <label>nome</label>
               <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                hidden
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleAddImage(file);
-                  e.target.value = "";
-                }}
+                className="input"
+                value={form.name}
+                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                placeholder="Ex: Praca Coronel Amazonas"
               />
-            </ReportCard>
-          </div>
-        ) : null}
+            </div>
 
-        {attraction ? (
-          <div className="form-grid--full">
-            <ReportCard pin="kraft" className="attraction-seal-card">
-              <h4 className="attraction-seal-card__title">
-                <Stamp size={15} /> selo de carimbo do local
-              </h4>
-              <p className="field__hint">
-                o turista aponta a camera para este codigo no local para carimbar a visita. regerar o codigo
-                invalida qualquer QR ja impresso — sera preciso imprimir e trocar a placa no local.
-              </p>
-              <div className="attraction-qr">
-                <div className="attraction-qr__preview">
-                  {qrPreviewUrl ? <img src={qrPreviewUrl} alt="QR Code do atrativo" /> : null}
-                </div>
-                <div className="attraction-qr__actions">
-                  <button
-                    className="btn btn--ghost btn--sm"
-                    type="button"
-                    onClick={handleDownloadQr}
-                    disabled={loadingQr || !qrPreviewUrl}
-                  >
-                    <Download size={14} /> baixar PNG
-                  </button>
-                  {confirmRegenerate ? (
-                    <div style={{ display: "flex", gap: 6 }}>
-                      <button
-                        className="btn btn--danger btn--sm"
-                        type="button"
-                        onClick={handleRegenerateQr}
-                      >
-                        confirmar
-                      </button>
-                      <button
-                        className="btn btn--ghost btn--sm"
-                        type="button"
-                        onClick={() => setConfirmRegenerate(false)}
-                      >
-                        cancelar
-                      </button>
+            <div className="field form-grid--full">
+              <label>descricao</label>
+              <textarea
+                className="textarea"
+                value={form.description}
+                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                placeholder="Um breve resumo para o turista"
+              />
+            </div>
+
+            <div className="field">
+              <label>categoria</label>
+              <select
+                className="select"
+                value={form.category}
+                onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+              >
+                {Object.entries(CATEGORY_LABEL).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="field">
+              <label>raio de deteccao (metros)</label>
+              <input
+                className="input"
+                type="number"
+                min={10}
+                max={2000}
+                value={form.radiusMeters}
+                onChange={(e) => setForm((f) => ({ ...f, radiusMeters: Number(e.target.value) }))}
+              />
+            </div>
+
+            {attraction ? (
+              <div className="field form-grid--full">
+                <label>status</label>
+                <select
+                  className="select"
+                  value={form.active ? "active" : "inactive"}
+                  onChange={(e) => setForm((f) => ({ ...f, active: e.target.value === "active" }))}
+                >
+                  <option value="active">ativo</option>
+                  <option value="inactive">inativo</option>
+                </select>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="form-section-title">
+            <MapPin size={15} />
+            <span>localizacao</span>
+          </div>
+          <div className="field">
+            <span className="field__hint">
+              clique no mapa ou arraste o marcador para ajustar — o circulo azul mostra o raio de deteccao
+              usado para validar que o turista estava no local na hora de carimbar
+            </span>
+            <MapPicker
+              latitude={form.latitude}
+              longitude={form.longitude}
+              radiusMeters={form.radiusMeters}
+              onChange={(latitude, longitude) => setForm((f) => ({ ...f, latitude, longitude }))}
+            />
+          </div>
+        </div>
+
+        <div className="attraction-form-col">
+          {attraction ? (
+            <>
+              <ReportCard pin="blue" className="attraction-photos-card">
+                <h4 className="attraction-photos-card__title">
+                  <Images size={15} /> fotos do atrativo
+                </h4>
+                <p className="field__hint">
+                  ate {MAX_IMAGES} fotos — a marcada com a estrela e a capa usada na lista do turista. passe o
+                  mouse sobre uma foto para definir como capa ou remover.
+                </p>
+                <div className="attraction-gallery">
+                  {images.map((image, index) => (
+                    <div
+                      key={image.id}
+                      className={`attraction-gallery__item${index === 0 ? " attraction-gallery__item--cover" : ""}`}
+                    >
+                      <img src={galleryImageUrl(attraction.id, image.id)} alt="" />
+                      {index === 0 ? <span className="attraction-gallery__cover-badge">capa</span> : null}
+                      <div className="attraction-gallery__item-actions">
+                        {index !== 0 ? (
+                          <button type="button" title="definir como capa" onClick={() => handleSetCover(image.id)}>
+                            <Star size={12} />
+                          </button>
+                        ) : null}
+                        <button type="button" title="remover" onClick={() => handleDeleteImage(image.id)}>
+                          <X size={12} />
+                        </button>
+                      </div>
                     </div>
-                  ) : (
+                  ))}
+                  {images.length < MAX_IMAGES ? (
+                    <button
+                      type="button"
+                      className="attraction-gallery__add"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingImage}
+                    >
+                      {uploadingImage ? (
+                        <span>enviando...</span>
+                      ) : (
+                        <>
+                          <Plus size={20} />
+                          <span>{images.length === 0 ? "enviar foto" : "adicionar"}</span>
+                        </>
+                      )}
+                    </button>
+                  ) : null}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  hidden
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleAddImage(file);
+                    e.target.value = "";
+                  }}
+                />
+              </ReportCard>
+
+              <ReportCard pin="kraft" className="attraction-seal-card">
+                <h4 className="attraction-seal-card__title">
+                  <Stamp size={15} /> selo de carimbo do local
+                </h4>
+                <p className="field__hint">
+                  o turista aponta a camera para este codigo no local para carimbar a visita. regerar o codigo
+                  invalida qualquer QR ja impresso — sera preciso imprimir e trocar a placa no local.
+                </p>
+                <div className="attraction-qr">
+                  <div className="attraction-qr__preview">
+                    {qrPreviewUrl ? <img src={qrPreviewUrl} alt="QR Code do atrativo" /> : null}
+                  </div>
+                  <div className="attraction-qr__actions">
                     <button
                       className="btn btn--ghost btn--sm"
                       type="button"
-                      onClick={() => setConfirmRegenerate(true)}
-                      disabled={loadingQr}
+                      onClick={handleDownloadQr}
+                      disabled={loadingQr || !qrPreviewUrl}
                     >
-                      <RefreshCw size={14} /> regenerar codigo
+                      <Download size={14} /> baixar PNG
                     </button>
-                  )}
+                    {confirmRegenerate ? (
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button className="btn btn--danger btn--sm" type="button" onClick={handleRegenerateQr}>
+                          confirmar
+                        </button>
+                        <button
+                          className="btn btn--ghost btn--sm"
+                          type="button"
+                          onClick={() => setConfirmRegenerate(false)}
+                        >
+                          cancelar
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        className="btn btn--ghost btn--sm"
+                        type="button"
+                        onClick={() => setConfirmRegenerate(true)}
+                        disabled={loadingQr}
+                      >
+                        <RefreshCw size={14} /> regenerar codigo
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </ReportCard>
-          </div>
-        ) : null}
-      </div>
-
-      {error ? <p className="banner banner--error" style={{ marginTop: 16 }}>{error}</p> : null}
-
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 20 }}>
-        <button className="btn btn--ghost" onClick={onClose} type="button" disabled={saving}>
-          Cancelar
-        </button>
-        <button className="btn btn--primary" onClick={handleSubmit} type="button" disabled={saving || !form.name.trim()}>
-          {saving ? "salvando..." : attraction ? "Salvar alteracoes" : "Criar atrativo"}
-        </button>
+              </ReportCard>
+            </>
+          ) : (
+            <div className="attraction-form-placeholder">
+              <p>salve o atrativo primeiro — depois disso voce podera enviar fotos e gerar o QR Code aqui.</p>
+            </div>
+          )}
+        </div>
       </div>
     </Modal>
   );
