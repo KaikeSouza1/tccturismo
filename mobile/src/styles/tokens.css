@@ -1,0 +1,79 @@
+:root {
+  color-scheme: light only;
+
+  /* Azuis - identidade principal (ceu, rio, tinta de carimbo) */
+  --color-blue-950: #071B32;
+  --color-blue-900: #0D3A63;
+  --color-blue-800: #0F4C82;
+  --color-blue-700: #0B5FA5;
+  --color-blue-600: #1876C4;
+  --color-blue-500: #2F92DD;
+  --color-blue-300: #7FC0EE;
+  --color-blue-100: #DFEEFB;
+  --color-blue-50: #F2F8FD;
+
+  /* Tinta de carimbo - mais saturada/profunda que o azul de UI */
+  --color-ink-stamp: #123056;
+
+  /* Verde-trilha - confirmacoes, presenca validada */
+  --color-trail-700: #146641;
+  --color-trail-500: #279A62;
+  --color-trail-100: #E1F3E8;
+
+  /* Ambar - exclusivo para gamificacao (pontos, medalhas, conquistas) */
+  --color-amber-700: #A3670A;
+  --color-amber-500: #E8951F;
+  --color-amber-100: #FCEDD1;
+
+  /* Terracota - alertas, estados de erro, fita washi vermelha */
+  --color-clay-700: #8C3220;
+  --color-clay-600: #B5432E;
+  --color-clay-100: #FAE5DE;
+
+  /* Kraft/caramelo - usado com moderacao: fita, tab labels, nav */
+  --color-kraft-700: #7C4F28;
+  --color-kraft-400: #C89A5D;
+  --color-kraft-200: #EDDCBB;
+
+  /* Canvas moderno - quase branco, leve fundo frio, NAO papel envelhecido */
+  --color-canvas: #F8F8F5;
+  --color-canvas-dim: #F0F1EC;
+
+  /* Paginas/cartoes - papel creme, usado como superficie de conteudo, nao a tela inteira */
+  --color-paper: #F8F8F5;
+  --color-paper-raised: #FFFDF7;
+  --color-paper-dim: #EFEADC;
+  --color-ink-900: #182130;
+  --color-ink-700: #3A4557;
+  --color-ink-500: #6C7688;
+  --color-ink-300: #ADB4BF;
+  --color-line: #E4E0D2;
+
+  --glass-fill: rgba(255, 253, 247, 0.88);
+  --glass-blur: 18px;
+
+  --font-display: "Fraunces", "Iowan Old Style", ui-serif, Georgia, serif;
+  --font-body: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-hand: "Caveat", cursive;
+
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 1px 2px rgba(16, 32, 55, 0.04), 0 14px 28px -12px rgba(16, 32, 55, 0.16);
+  --shadow-raised: 0 10px 24px -6px rgba(11, 59, 105, 0.28), 0 2px 6px rgba(11, 59, 105, 0.14);
+  --shadow-tape: 0 3px 6px rgba(16, 32, 55, 0.14);
+  --shadow-float: 0 18px 40px -14px rgba(16, 32, 55, 0.28);
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}

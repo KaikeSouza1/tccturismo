@@ -1,0 +1,63 @@
+.leaderboard-list {
+  padding: 0 var(--space-5) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.leaderboard-row .journal-card__surface {
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.leaderboard-row--me .journal-card__surface {
+  border-color: var(--color-blue-600);
+  border-width: 2px;
+}
+
+.leaderboard-row__rank {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 14px;
+  background: var(--color-paper-dim);
+  color: var(--color-ink-500);
+  flex-shrink: 0;
+}
+
+.leaderboard-row__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.leaderboard-row__body strong {
+  font-family: var(--font-display);
+  font-size: 15.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leaderboard-row__body span {
+  font-family: var(--font-hand);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-ink-500);
+}
+
+.leaderboard-row__points {
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--color-ink-stamp);
+  font-size: 16px;
+  white-space: nowrap;
+}

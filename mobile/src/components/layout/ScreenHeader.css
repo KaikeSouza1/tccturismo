@@ -1,0 +1,53 @@
+.screen-header {
+  position: relative;
+  padding: calc(var(--space-6) + var(--safe-top)) var(--space-5) var(--space-5);
+}
+
+.screen-header__row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.screen-header__text {
+  display: flex;
+  flex-direction: column;
+}
+
+.screen-header__eyebrow {
+  display: inline-block;
+  align-self: flex-start;
+  font-family: var(--font-hand);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-blue-900);
+  background: repeating-linear-gradient(100deg, #bcdcf3 0px, #bcdcf3 6px, #a9d0ee 6px, #a9d0ee 12px);
+  padding: 2px 12px 3px;
+  transform: rotate(-2deg);
+  margin-bottom: var(--space-2);
+  margin-left: -4px;
+  box-shadow: var(--shadow-tape);
+  clip-path: polygon(2% 0%, 0% 20%, 3% 45%, 0% 70%, 2% 100%, 98% 100%, 100% 75%, 97% 50%, 100% 25%, 98% 0%);
+}
+
+.screen-header__title {
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.3px;
+  max-width: 18ch;
+}
+
+.screen-header__subtitle {
+  font-size: 14.5px;
+  color: var(--color-ink-500);
+  margin-top: var(--space-2);
+  max-width: 34ch;
+}
+
+.screen-header__rule {
+  margin-top: var(--space-5);
+  height: 1px;
+  background-image: repeating-linear-gradient(90deg, var(--color-line) 0 6px, transparent 6px 11px);
+}

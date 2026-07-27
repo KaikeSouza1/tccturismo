@@ -1,0 +1,29 @@
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.page-header__eyebrow {
+  display: inline-block;
+  font-family: var(--font-hand);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-blue-700);
+  margin-bottom: 2px;
+}
+
+.page-header__title {
+  font-size: 28px;
+  letter-spacing: -0.2px;
+}
+
+.page-header__subtitle {
+  margin: var(--space-2) 0 0;
+  color: var(--color-ink-500);
+  font-size: 14.5px;
+  max-width: 60ch;
+}

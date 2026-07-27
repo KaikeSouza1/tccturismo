@@ -1,0 +1,67 @@
+@import "./tokens.css";
+@import "./kit.css";
+@import "leaflet/dist/leaflet.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-canvas);
+  background-image:
+    repeating-linear-gradient(0deg, rgba(11, 95, 165, 0.05) 0 1px, transparent 1px 32px),
+    repeating-linear-gradient(90deg, rgba(11, 95, 165, 0.05) 0 1px, transparent 1px 32px);
+  color: var(--color-ink-900);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--color-blue-950);
+  margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  background: var(--color-blue-300);
+  color: var(--color-blue-950);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-blue-600);
+  outline-offset: 2px;
+}
+
+.leaflet-container {
+  font-family: var(--font-body);
+}

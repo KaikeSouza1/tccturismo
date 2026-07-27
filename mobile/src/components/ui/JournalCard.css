@@ -1,0 +1,36 @@
+.journal-card {
+  filter: drop-shadow(0 10px 14px rgba(30, 22, 10, 0.16)) drop-shadow(0 1px 1px rgba(30, 22, 10, 0.08));
+  position: relative;
+}
+
+.journal-card__surface {
+  background: var(--color-paper-raised);
+  border: 1px solid var(--color-line);
+}
+
+.journal-card--torn-top .journal-card__surface {
+  clip-path: polygon(
+    0% 5%, 4% 1%, 8% 4%, 12% 0%, 16% 3%, 20% 1%, 24% 5%, 28% 1%, 32% 4%, 36% 0%,
+    40% 3%, 44% 1%, 48% 5%, 52% 1%, 56% 4%, 60% 0%, 64% 3%, 68% 1%, 72% 5%, 76% 1%,
+    80% 4%, 84% 0%, 88% 3%, 92% 1%, 96% 4%, 100% 1%,
+    100% 100%, 0% 100%
+  );
+  padding-top: 14px;
+}
+
+.journal-card--torn-both .journal-card__surface {
+  clip-path: polygon(
+    0% 5%, 4% 1%, 8% 4%, 12% 0%, 16% 3%, 20% 1%, 24% 5%, 28% 1%, 32% 4%, 36% 0%,
+    40% 3%, 44% 1%, 48% 5%, 52% 1%, 56% 4%, 60% 0%, 64% 3%, 68% 1%, 72% 5%, 76% 1%,
+    80% 4%, 84% 0%, 88% 3%, 92% 1%, 96% 4%, 100% 1%,
+    100% 95%, 96% 99%, 92% 96%, 88% 100%, 84% 97%, 80% 99%, 76% 95%, 72% 99%, 68% 96%, 64% 100%,
+    60% 97%, 56% 99%, 52% 95%, 48% 99%, 44% 96%, 40% 100%, 36% 97%, 32% 99%, 28% 95%, 24% 99%,
+    20% 96%, 16% 100%, 12% 97%, 8% 99%, 4% 95%, 0% 99%
+  );
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
+.journal-card--torn-none .journal-card__surface {
+  border-radius: var(--radius-sm);
+}

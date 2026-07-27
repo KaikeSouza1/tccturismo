@@ -1,0 +1,20 @@
+node_modules/
+dist/
+dist-ssr/
+*.log
+.DS_Store
+.vscode/
+.idea/
+
+.env
+.env.*
+!.env.example
+
+# Configuracao local de ferramentas de assistencia de codigo - nao faz parte
+# do codigo do projeto
+.claude/
+CLAUDE.md
+
+# Documentos de trabalho pessoais, fora do escopo do repositorio de codigo
+PROPOSTA_EVOLUCAO_DESIGN.md
+*.pdf

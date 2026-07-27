@@ -1,0 +1,119 @@
+.login-screen {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 860px) {
+  .login-screen {
+    grid-template-columns: 1fr;
+  }
+}
+
+.login-cover {
+  background: radial-gradient(120% 140% at 15% 10%, #124a80 0%, #071b32 70%);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--space-7);
+  position: relative;
+  overflow: hidden;
+}
+
+@media (max-width: 860px) {
+  .login-cover {
+    padding: var(--space-6);
+    min-height: 260px;
+  }
+}
+
+.login-cover::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(127, 192, 238, 0.14) 1px, transparent 1px);
+  background-size: 22px 22px;
+  opacity: 0.5;
+}
+
+.login-cover__mark {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(127, 192, 238, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-blue-300);
+  margin-bottom: var(--space-5);
+  position: relative;
+}
+
+.login-cover__title {
+  font-size: clamp(38px, 6vw, 56px);
+  line-height: 1;
+  margin-bottom: var(--space-4);
+  position: relative;
+  color: #fff;
+}
+
+.login-cover__tagline {
+  font-size: 15.5px;
+  color: var(--color-blue-100);
+  max-width: 42ch;
+  line-height: 1.6;
+  position: relative;
+}
+
+.login-cover__index {
+  display: flex;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+  position: relative;
+  flex-wrap: wrap;
+}
+
+.login-cover__index span {
+  font-family: var(--font-hand);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-blue-300);
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-7);
+  max-width: 420px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.login-form__eyebrow {
+  font-family: var(--font-hand);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-blue-700);
+}
+
+.login-form__title {
+  font-size: 30px;
+  margin-top: -4px;
+}
+
+.login-form__hint {
+  color: var(--color-ink-500);
+  font-size: 14px;
+  margin: -8px 0 0;
+}
+
+.login-form__footer {
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--color-ink-300);
+  margin-top: var(--space-2);
+}

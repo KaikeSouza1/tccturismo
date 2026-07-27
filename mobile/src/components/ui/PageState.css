@@ -1,0 +1,87 @@
+.page-state {
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.page-state--message {
+  align-items: center;
+  text-align: center;
+  padding: var(--space-7) var(--space-5);
+  gap: var(--space-3);
+}
+
+.page-state__text {
+  color: var(--color-ink-500);
+  font-size: 14px;
+  max-width: 32ch;
+}
+
+.page-state__text--hand {
+  font-family: var(--font-hand);
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--color-ink-700);
+}
+
+.page-skeleton {
+  width: 100%;
+  pointer-events: none;
+}
+
+.page-skeleton .journal-card__surface {
+  padding: var(--space-4);
+}
+
+.page-skeleton__row {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.page-skeleton__thumb {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.page-skeleton__lines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+}
+
+.page-skeleton__line {
+  height: 12px;
+  border-radius: 4px;
+}
+
+.shimmer {
+  background: linear-gradient(
+    100deg,
+    var(--color-paper-dim) 30%,
+    #fff 50%,
+    var(--color-paper-dim) 70%
+  );
+  background-size: 220% 100%;
+  animation: shimmer-move 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer-move {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -20% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer {
+    animation: none;
+    background: var(--color-paper-dim);
+  }
+}

@@ -1,0 +1,84 @@
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(96px + var(--safe-bottom));
+  pointer-events: none;
+  z-index: 40;
+}
+
+.bottom-nav::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(24, 33, 48, 0.16), transparent 75%);
+  pointer-events: none;
+}
+
+.bottom-nav__bar {
+  pointer-events: auto;
+  position: absolute;
+  left: var(--space-4);
+  right: var(--space-4);
+  bottom: calc(var(--space-3) + var(--safe-bottom));
+  height: 66px;
+  border-radius: var(--radius-pill);
+  background: var(--glass-fill);
+  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: var(--shadow-float);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: center;
+}
+
+.bottom-nav__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 100%;
+  color: var(--color-ink-500);
+  text-decoration: none;
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1px;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.bottom-nav__item.is-active {
+  color: var(--color-ink-stamp);
+  transform: translateY(-1px);
+}
+
+.bottom-nav__spacer {
+  height: 100%;
+}
+
+.bottom-nav__scan {
+  pointer-events: auto;
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--space-3) + var(--safe-bottom) + 27px);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(155deg, var(--color-blue-600), var(--color-ink-stamp) 75%);
+  color: #fff;
+  box-shadow: var(--shadow-raised);
+  border: 3px solid var(--color-canvas);
+  text-decoration: none;
+  transition: transform 0.15s ease;
+}
+
+.bottom-nav__scan:active {
+  transform: translateX(-50%) scale(0.93);
+}

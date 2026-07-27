@@ -1,0 +1,53 @@
+.expedition-map {
+  display: block;
+  overflow: visible;
+}
+
+.expedition-map__bg {
+  fill: var(--color-paper-raised);
+  stroke: var(--color-line);
+  stroke-width: 1.5;
+}
+
+.expedition-map__contour {
+  fill: none;
+  stroke: var(--color-blue-100);
+  stroke-width: 1.2;
+}
+
+.expedition-map__trail {
+  fill: none;
+  stroke: var(--color-trail-500);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-dasharray: 1 7;
+}
+
+.expedition-map__pin {
+  cursor: pointer;
+}
+
+.expedition-map__pin-fill {
+  fill: var(--color-trail-600, var(--color-trail-700));
+  filter: drop-shadow(0 2px 3px rgba(16, 32, 55, 0.3));
+}
+
+.expedition-map__pin-ring {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+.expedition-map__pin-number {
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 800;
+  fill: #fff;
+}
+
+.expedition-map__pin-outline {
+  fill: var(--color-paper-dim);
+  stroke: var(--color-ink-300);
+  stroke-width: 1.4;
+  stroke-dasharray: 2.5 2.5;
+}

@@ -1,0 +1,95 @@
+.auth-screen {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-cover {
+  position: relative;
+  padding: calc(var(--space-7) + var(--safe-top)) var(--space-5) var(--space-6);
+  text-align: center;
+}
+
+.auth-cover .stamp {
+  position: absolute;
+  top: calc(var(--safe-top) + 18px);
+  right: 22px;
+}
+
+.auth-cover__title {
+  font-size: 68px;
+  font-weight: 900;
+  line-height: 0.86;
+  letter-spacing: -0.5px;
+  color: var(--color-ink-stamp);
+  margin-top: var(--space-4);
+}
+
+.auth-cover__tagline {
+  font-family: var(--font-hand);
+  font-size: 21px;
+  font-weight: 600;
+  color: var(--color-ink-700);
+  max-width: 26ch;
+  margin: var(--space-3) auto 0;
+  transform: rotate(-1.2deg);
+}
+
+.auth-form {
+  flex: 1;
+  background: var(--color-paper-raised);
+  border-top: 1px solid var(--color-line);
+  box-shadow: 0 -12px 24px -18px rgba(30, 22, 10, 0.35) inset;
+  padding: var(--space-6) var(--space-5) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 420px;
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+}
+
+.auth-form__tab {
+  position: absolute;
+  top: -15px;
+  left: var(--space-5);
+  background: var(--color-kraft-200);
+  color: var(--color-kraft-700);
+  font-family: var(--font-hand);
+  font-size: 15px;
+  font-weight: 700;
+  padding: 3px 14px 4px;
+  border-radius: 4px 4px 0 0;
+  border: 1px solid var(--color-kraft-400);
+  border-bottom: none;
+}
+
+.auth-form__title {
+  font-size: 22px;
+  margin-bottom: var(--space-1);
+}
+
+.auth-form__error {
+  background: var(--color-clay-100);
+  color: var(--color-clay-700);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  font-size: 13.5px;
+  font-weight: 600;
+  border-left: 3px solid var(--color-clay-600);
+}
+
+.auth-form__footer {
+  text-align: center;
+  font-size: 14px;
+  color: var(--color-ink-500);
+  margin-top: var(--space-2);
+}
+
+.auth-form__footer a {
+  color: var(--color-ink-stamp);
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 2px dashed var(--color-blue-300);
+}

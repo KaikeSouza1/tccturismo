@@ -1,0 +1,27 @@
+.polaroid {
+  background: #fffdf8;
+  padding: 6px 6px 4px;
+  filter: drop-shadow(0 6px 10px rgba(30, 22, 10, 0.22));
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.polaroid__photo {
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-paper-dim);
+}
+
+.polaroid__caption {
+  font-family: var(--font-hand);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ink-700);
+  padding: 3px 2px 1px;
+  text-align: center;
+  white-space: nowrap;
+}

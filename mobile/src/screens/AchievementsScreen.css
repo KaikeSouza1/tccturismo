@@ -1,0 +1,83 @@
+.achievements-list {
+  padding: 0 var(--space-5) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.achievement-card .journal-card__surface {
+  padding: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.achievement-card--locked .journal-card__surface {
+  opacity: 0.68;
+}
+
+.achievement-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.achievement-card__body strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 17px;
+}
+
+.achievement-card__body p {
+  font-size: 13px;
+  color: var(--color-ink-500);
+  margin-top: 3px;
+}
+
+.achievement-card__rarity {
+  display: inline-block;
+  font-family: var(--font-hand);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0 8px;
+  border-radius: var(--radius-pill);
+  margin-top: 2px;
+}
+
+.achievement-card__rarity--bronze {
+  color: var(--color-kraft-700);
+  background: var(--color-kraft-200);
+}
+
+.achievement-card__rarity--silver {
+  color: var(--color-ink-700);
+  background: var(--color-paper-dim);
+}
+
+.achievement-card__rarity--gold,
+.achievement-card__rarity--legendary {
+  color: var(--color-amber-700);
+  background: var(--color-amber-100);
+}
+
+.achievement-card__date {
+  display: inline-block;
+  margin-top: var(--space-2);
+  font-family: var(--font-hand);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-trail-700);
+}
+
+.achievement-card__points {
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--color-amber-700);
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+.achievement-card--locked .achievement-card__points {
+  color: var(--color-ink-300);
+}

@@ -1,0 +1,66 @@
+:root {
+  color-scheme: light only;
+
+  /* Mesma paleta do app do turista — nao e um sistema separado, e a mesma
+     identidade "Trilha Local" vista do lado de dentro da organizacao. */
+  --color-blue-950: #071b32;
+  --color-blue-900: #0d3a63;
+  --color-blue-800: #0f4c82;
+  --color-blue-700: #0b5fa5;
+  --color-blue-600: #1876c4;
+  --color-blue-500: #2f92dd;
+  --color-blue-300: #7fc0ee;
+  --color-blue-100: #dfeefb;
+  --color-blue-50: #f2f8fd;
+
+  --color-ink-stamp: #123056;
+
+  --color-trail-700: #146641;
+  --color-trail-500: #279a62;
+  --color-trail-100: #e1f3e8;
+
+  --color-amber-700: #a3670a;
+  --color-amber-500: #e8951f;
+  --color-amber-100: #fcedd1;
+
+  --color-clay-700: #8c3220;
+  --color-clay-600: #b5432e;
+  --color-clay-100: #fae5de;
+
+  --color-kraft-700: #7c4f28;
+  --color-kraft-400: #c89a5d;
+  --color-kraft-200: #eddcbb;
+
+  --color-canvas: #f8f8f5;
+  --color-paper: #f8f8f5;
+  --color-paper-raised: #fffdf7;
+  --color-paper-dim: #efeadc;
+  --color-ink-900: #182130;
+  --color-ink-700: #3a4557;
+  --color-ink-500: #6c7688;
+  --color-ink-300: #adb4bf;
+  --color-line: #e4e0d2;
+
+  --font-display: "Fraunces", "Iowan Old Style", ui-serif, Georgia, serif;
+  --font-body: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-hand: "Caveat", cursive;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 1px 2px rgba(16, 32, 55, 0.05), 0 10px 24px -10px rgba(16, 32, 55, 0.14);
+  --shadow-raised: 0 12px 28px -8px rgba(11, 59, 105, 0.24);
+  --shadow-popover: 0 20px 48px -12px rgba(16, 32, 55, 0.32);
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --sidebar-width: 232px;
+}

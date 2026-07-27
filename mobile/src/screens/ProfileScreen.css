@@ -1,0 +1,101 @@
+.profile-content {
+  padding: 0 var(--space-5) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.profile-sync-notice {
+  background: var(--color-amber-100);
+  color: var(--color-amber-700);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: calc(-1 * var(--space-2));
+}
+
+.profile-sync-notice button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.profile-points.journal-card .journal-card__surface {
+  padding: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.profile-points strong {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--color-ink-900);
+}
+
+.profile-points p {
+  font-size: 13px;
+  color: var(--color-ink-500);
+  margin-top: 2px;
+}
+
+.profile-map .journal-card__surface {
+  padding: var(--space-4);
+}
+
+.profile-map__heading {
+  font-family: var(--font-hand);
+  font-size: 19px;
+  color: var(--color-ink-stamp);
+  margin-bottom: var(--space-3);
+}
+
+.profile-map__legend {
+  font-family: var(--font-hand);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-trail-700);
+  text-align: center;
+  margin-top: var(--space-3);
+}
+
+.profile-menu {
+  background: var(--color-paper-raised);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.profile-menu__item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: none;
+  border: none;
+  border-bottom: 1px dashed var(--color-line);
+  color: var(--color-ink-900);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.profile-menu__item:last-child {
+  border-bottom: none;
+}
+
+.profile-menu__item:active {
+  background: var(--color-blue-50);
+}
+
+.profile-menu__item svg {
+  color: var(--color-ink-stamp);
+}

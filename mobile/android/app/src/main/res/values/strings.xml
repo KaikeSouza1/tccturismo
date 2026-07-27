@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Trilha Local</string>
+    <string name="title_activity_main">Trilha Local</string>
+    <string name="package_name">br.edu.unespar.trilhalocal</string>
+    <string name="custom_url_scheme">br.edu.unespar.trilhalocal</string>
+</resources>

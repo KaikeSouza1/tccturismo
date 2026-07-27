@@ -1,0 +1,136 @@
+.stamp {
+  position: relative;
+  flex-shrink: 0;
+  filter: drop-shadow(0 6px 10px rgba(16, 32, 55, 0.16));
+}
+
+.stamp__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2.5px solid currentColor;
+  background: color-mix(in srgb, currentColor 9%, #fff 91%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stamp__ring::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  border: 1px dashed currentColor;
+  opacity: 0.55;
+}
+
+.stamp__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 12px;
+  color: currentColor;
+}
+
+.stamp__label {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 7.5px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  line-height: 1.15;
+  margin-top: 2px;
+  max-width: 100%;
+}
+
+.stamp--ink {
+  color: var(--color-ink-stamp);
+}
+
+.stamp--success {
+  color: var(--color-trail-700);
+}
+
+.stamp--amber {
+  color: var(--color-amber-700);
+}
+
+.stamp--locked {
+  color: var(--color-ink-300);
+  filter: none;
+}
+
+.stamp--locked .stamp__ring {
+  border-style: dashed;
+  background: transparent;
+}
+
+.stamp--impact {
+  color: var(--color-trail-700);
+  filter: drop-shadow(0 8px 14px rgba(16, 32, 55, 0.28));
+  -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><filter id='b'><feTurbulence type='fractalNoise' baseFrequency='0.045' numOctaves='3' seed='7' result='n'/><feDisplacementMap in='SourceGraphic' in2='n' scale='7'/></filter><circle cx='50' cy='50' r='46' fill='white' filter='url(%23b)'/></svg>");
+  mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><filter id='b'><feTurbulence type='fractalNoise' baseFrequency='0.045' numOctaves='3' seed='7' result='n'/><feDisplacementMap in='SourceGraphic' in2='n' scale='7'/></filter><circle cx='50' cy='50' r='46' fill='white' filter='url(%23b)'/></svg>");
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}
+
+.stamp--impact .stamp__ring {
+  border-width: 3px;
+}
+
+.stamp--bronze {
+  color: var(--color-kraft-700);
+}
+
+.stamp--silver {
+  color: var(--color-ink-500);
+}
+
+.stamp--gold {
+  color: var(--color-amber-700);
+}
+
+.stamp--legendary {
+  color: var(--color-amber-700);
+}
+
+.stamp--legendary .stamp__ring::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from var(--holo-angle, 0deg),
+    rgba(232, 149, 31, 0) 0deg,
+    rgba(255, 255, 255, 0.9) 25deg,
+    rgba(232, 149, 31, 0) 60deg,
+    rgba(232, 149, 31, 0) 180deg,
+    rgba(255, 255, 255, 0.7) 210deg,
+    rgba(232, 149, 31, 0) 250deg
+  );
+  mix-blend-mode: color-dodge;
+  animation: holo-idle 6s linear infinite;
+}
+
+@keyframes holo-idle {
+  from {
+    --holo-angle: 0deg;
+  }
+  to {
+    --holo-angle: 360deg;
+  }
+}
+
+@property --holo-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stamp--legendary .stamp__ring::after {
+    animation: none;
+  }
+}

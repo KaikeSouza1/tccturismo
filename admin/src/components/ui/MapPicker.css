@@ -1,0 +1,122 @@
+.map-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.map-picker__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1.5px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  background: var(--color-paper);
+  color: var(--color-ink-300);
+}
+
+.map-picker__search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  color: var(--color-ink-900);
+  outline: none;
+}
+
+.map-picker__results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.map-picker__results li + li {
+  border-top: 1px solid var(--color-line);
+}
+
+.map-picker__results button {
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  background: var(--color-paper);
+  border: none;
+  font-size: 12.5px;
+  color: var(--color-ink-700);
+  cursor: pointer;
+}
+
+.map-picker__results button:hover {
+  background: var(--color-blue-50);
+  color: var(--color-blue-800);
+}
+
+.map-picker__search-error {
+  font-size: 12px;
+  color: var(--color-clay-700);
+  margin: 0;
+}
+
+.map-picker__canvas {
+  position: relative;
+  height: 440px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+}
+
+.map-picker__scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 30, 51, 0.55);
+  z-index: 1999;
+}
+
+.map-picker__canvas--fullscreen {
+  position: fixed;
+  top: 4vh;
+  left: 4vw;
+  right: 4vw;
+  bottom: 4vh;
+  height: auto;
+  z-index: 2000;
+  box-shadow: var(--shadow-popover);
+}
+
+.map-picker__layer-toggle,
+.map-picker__fullscreen-toggle {
+  position: absolute;
+  right: 10px;
+  z-index: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-line);
+  background: rgba(255, 253, 247, 0.92);
+  color: var(--color-ink-700);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(24, 33, 48, 0.16);
+}
+
+.map-picker__layer-toggle {
+  top: 10px;
+}
+
+.map-picker__fullscreen-toggle {
+  top: 50px;
+}
+
+.map-picker__layer-toggle:hover,
+.map-picker__fullscreen-toggle:hover {
+  border-color: var(--color-blue-300);
+  color: var(--color-blue-800);
+}
