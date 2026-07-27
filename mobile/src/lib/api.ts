@@ -4,6 +4,10 @@ export function attractionImageUrl(attractionId: string): string {
   return `${API_URL}/attractions/${attractionId}/image`;
 }
 
+export function attractionGalleryImageUrl(attractionId: string, imageId: string): string {
+  return `${API_URL}/attractions/${attractionId}/images/${imageId}`;
+}
+
 export class ApiError extends Error {
   status: number;
   details?: { path: string; message: string }[];

@@ -69,3 +69,7 @@ export async function apiUpload<T>(
 export function imageUrl(attractionId: string): string {
   return `${API_URL}/attractions/${attractionId}/image`;
 }
+
+export function galleryImageUrl(attractionId: string, imageId: string): string {
+  return `${API_URL}/attractions/${attractionId}/images/${imageId}`;
+}

@@ -12,7 +12,24 @@
   overflow: hidden;
 }
 
+/* Textura granulada atras/sobre a camera — a tela nunca fica um retangulo
+   preto liso enquanto a camera inicia, e da uma imperfeicao proposital de
+   filme antigo por cima da imagem ao vivo, no mesmo espirito do papel e
+   carimbos imperfeitos usados no resto do app. */
+.scan-camera::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0.15;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
 .scan-camera__video {
+  position: relative;
+  z-index: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -21,6 +38,7 @@
 .scan-camera__overlay {
   position: absolute;
   inset: 0;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -56,11 +74,35 @@
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
 }
 
+.scan-camera__recognized {
+  position: absolute;
+  top: var(--space-6);
+  left: var(--space-4);
+  right: var(--space-4);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: var(--color-paper-raised);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4) var(--space-2) var(--space-2);
+  box-shadow: 0 6px 18px rgba(10, 20, 35, 0.35);
+}
+
+.scan-camera__recognized span {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14.5px;
+  color: var(--color-ink-stamp);
+  line-height: 1.2;
+}
+
 .scan-camera__error {
   position: absolute;
   bottom: var(--space-6);
   left: var(--space-4);
   right: var(--space-4);
+  z-index: 3;
   background: var(--color-clay-100);
   color: var(--color-clay-600);
   padding: var(--space-3);

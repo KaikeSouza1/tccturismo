@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../lib/auth-context";
-import { apiRequest } from "../lib/api";
+import { apiRequest, attractionGalleryImageUrl } from "../lib/api";
 import { clearWatch, getCurrentPosition, watchPosition } from "../lib/geolocation";
 import { distanceInMeters } from "../lib/geo";
 import { getWalkingRoute } from "../lib/osrm";
@@ -44,6 +44,7 @@ export function AttractionDetailScreen() {
   const navigate = useNavigate();
   const { token } = useAuth();
   const [attraction, setAttraction] = useState<Attraction | null>(null);
+  const [galleryIds, setGalleryIds] = useState<string[]>([]);
   const [distance, setDistance] = useState<number | null>(null);
   const [routeDistance, setRouteDistance] = useState<number | null>(null);
   const [pastVisits, setPastVisits] = useState<Visit[]>([]);
@@ -64,6 +65,11 @@ export function AttractionDetailScreen() {
       ]);
 
       setAttraction(found);
+      if (found.hasImage) {
+        apiRequest<{ id: string }[]>(`/attractions/${id}/images`)
+          .then((images) => setGalleryIds(images.map((i) => i.id)))
+          .catch(() => {});
+      }
       if (position) {
         setDistance(distanceInMeters(position.latitude, position.longitude, found.latitude, found.longitude));
         // Distancia real por estradas/trilhas (OSRM) so para o card
@@ -197,6 +203,20 @@ export function AttractionDetailScreen() {
               </div>
             ) : null}
           </div>
+
+          {galleryIds.length > 1 ? (
+            <div className="detail-gallery">
+              {galleryIds.slice(1).map((imageId) => (
+                <Polaroid key={imageId} size={72} tilt={0}>
+                  <img
+                    src={attractionGalleryImageUrl(attraction.id, imageId)}
+                    alt=""
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  />
+                </Polaroid>
+              ))}
+            </div>
+          ) : null}
 
           <h1 className="detail-title">{attraction.name}</h1>
 

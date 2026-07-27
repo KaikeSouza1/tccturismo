@@ -280,6 +280,133 @@
   align-items: flex-start;
 }
 
+.attraction-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.attraction-gallery__item {
+  position: relative;
+  width: 120px;
+  height: 90px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+}
+
+.attraction-gallery__item--cover {
+  border: 2px solid var(--color-blue-500, var(--color-blue-800));
+}
+
+.attraction-gallery__item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.attraction-gallery__cover-badge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background: rgba(11, 79, 138, 0.9);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: var(--radius-pill);
+}
+
+.attraction-gallery__item-actions {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.attraction-gallery__item:hover .attraction-gallery__item-actions {
+  opacity: 1;
+}
+
+.attraction-gallery__item-actions button {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: none;
+  background: rgba(24, 33, 48, 0.75);
+  color: #fff;
+  cursor: pointer;
+}
+
+.attraction-gallery__item-actions button:hover {
+  background: rgba(24, 33, 48, 0.95);
+}
+
+.attraction-gallery__add {
+  width: 120px;
+  height: 90px;
+  border-radius: var(--radius-md);
+  border: 1.5px dashed var(--color-line);
+  background: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--color-ink-300);
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.attraction-gallery__add:hover {
+  border-color: var(--color-blue-300);
+  color: var(--color-blue-800);
+}
+
+.attraction-gallery__add:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.attraction-qr {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.attraction-qr__preview {
+  width: 120px;
+  height: 120px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  overflow: hidden;
+}
+
+.attraction-qr__preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.attraction-qr__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
 .achievement-attraction-list {
   display: flex;
   flex-direction: column;

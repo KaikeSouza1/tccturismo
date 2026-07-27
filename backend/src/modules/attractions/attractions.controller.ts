@@ -3,13 +3,19 @@ import crypto from "node:crypto";
 import QRCode from "qrcode";
 import { createAttractionSchema, updateAttractionSchema } from "./attractions.validation";
 import {
+  addAttractionImage,
   createAttraction,
   deactivateAttraction,
   getAttractionById,
+  getAttractionImageById,
   getAttractionQrPayload,
+  getCoverImage,
+  listAttractionImages,
   listOrganizationAttractions,
   listPublicAttractions,
-  setAttractionImageKey,
+  regenerateAttractionQrToken,
+  removeAttractionImage,
+  setCoverImage,
   updateAttraction,
 } from "./attractions.service";
 import { deleteObject, getObjectStream, uploadObject } from "../../config/r2";
@@ -43,7 +49,7 @@ export async function getOne(req: Request, res: Response) {
     latitude: attraction.latitude,
     longitude: attraction.longitude,
     radiusMeters: attraction.radius_meters,
-    hasImage: attraction.image_key !== null,
+    hasImage: attraction.has_image,
     active: attraction.active,
   });
 }
@@ -81,7 +87,18 @@ export async function qrCodeImage(req: Request, res: Response) {
   res.send(png);
 }
 
-export async function uploadImage(req: Request, res: Response) {
+export async function regenerateQrCode(req: Request, res: Response) {
+  if (!req.auth?.organizationId) throw ApiError.forbidden();
+  const result = await regenerateAttractionQrToken(req.auth.organizationId, req.params.id);
+  res.json(result);
+}
+
+export async function listImages(req: Request, res: Response) {
+  const images = await listAttractionImages(req.params.id);
+  res.json(images.map((image) => ({ id: image.id })));
+}
+
+export async function uploadGalleryImage(req: Request, res: Response) {
   if (!req.auth?.organizationId) throw ApiError.forbidden();
   const file = req.file;
   if (!file) throw ApiError.badRequest("Nenhuma imagem enviada");
@@ -93,30 +110,37 @@ export async function uploadImage(req: Request, res: Response) {
 
   const key = `attractions/${req.params.id}/${crypto.randomUUID()}.${extension}`;
   await uploadObject(key, file.buffer, file.mimetype);
-  await setAttractionImageKey(req.auth.organizationId, req.params.id, key);
-
-  res.status(201).json({ hasImage: true });
+  const image = await addAttractionImage(req.auth.organizationId, req.params.id, key);
+  res.status(201).json({ id: image.id });
 }
 
-export async function removeImage(req: Request, res: Response) {
+export async function deleteGalleryImage(req: Request, res: Response) {
   if (!req.auth?.organizationId) throw ApiError.forbidden();
-  const attraction = await getAttractionById(req.params.id);
-  if (attraction.organization_id !== req.auth.organizationId) {
-    throw ApiError.notFound("Atrativo nao encontrado na sua organizacao");
-  }
-  if (attraction.image_key) {
-    await deleteObject(attraction.image_key).catch(() => {});
-  }
-  await setAttractionImageKey(req.auth.organizationId, req.params.id, null);
+  const image = await removeAttractionImage(req.auth.organizationId, req.params.id, req.params.imageId);
+  await deleteObject(image.image_key).catch(() => {});
   res.status(204).send();
 }
 
-export async function serveImage(req: Request, res: Response) {
-  const attraction = await getAttractionById(req.params.id);
-  if (!attraction.image_key) {
+export async function setCover(req: Request, res: Response) {
+  if (!req.auth?.organizationId) throw ApiError.forbidden();
+  await setCoverImage(req.auth.organizationId, req.params.id, req.params.imageId);
+  res.status(204).send();
+}
+
+export async function serveCoverImage(req: Request, res: Response) {
+  const image = await getCoverImage(req.params.id);
+  if (!image) {
     throw ApiError.notFound("Este atrativo nao possui imagem");
   }
-  const { body, contentType } = await getObjectStream(attraction.image_key);
+  const { body, contentType } = await getObjectStream(image.image_key);
+  res.setHeader("Content-Type", contentType ?? "image/jpeg");
+  res.setHeader("Cache-Control", "public, max-age=86400");
+  body.pipe(res);
+}
+
+export async function serveGalleryImage(req: Request, res: Response) {
+  const image = await getAttractionImageById(req.params.id, req.params.imageId);
+  const { body, contentType } = await getObjectStream(image.image_key);
   res.setHeader("Content-Type", contentType ?? "image/jpeg");
   res.setHeader("Cache-Control", "public, max-age=86400");
   body.pipe(res);

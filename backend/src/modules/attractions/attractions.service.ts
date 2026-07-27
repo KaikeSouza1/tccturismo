@@ -3,6 +3,8 @@ import { query } from "../../config/db";
 import { ApiError } from "../../utils/ApiError";
 import type { AttractionRecord } from "../../types";
 
+export const MAX_ATTRACTION_IMAGES = 6;
+
 interface CreateAttractionInput {
   name: string;
   description?: string;
@@ -14,11 +16,20 @@ interface CreateAttractionInput {
 
 type UpdateAttractionInput = Partial<CreateAttractionInput> & { active?: boolean };
 
+export interface AttractionImageRecord {
+  id: string;
+  attraction_id: string;
+  image_key: string;
+  position: number;
+}
+
 function generateQrToken(): string {
   return `TCC-${crypto.randomBytes(12).toString("hex")}`;
 }
 
-function toPublicAttraction(attraction: AttractionRecord & { organization_name?: string }) {
+function toPublicAttraction(
+  attraction: AttractionRecord & { organization_name?: string; has_image: boolean }
+) {
   return {
     id: attraction.id,
     organizationId: attraction.organization_id,
@@ -29,14 +40,17 @@ function toPublicAttraction(attraction: AttractionRecord & { organization_name?:
     latitude: attraction.latitude,
     longitude: attraction.longitude,
     radiusMeters: attraction.radius_meters,
-    hasImage: attraction.image_key !== null,
+    hasImage: attraction.has_image,
     active: attraction.active,
   };
 }
 
+const HAS_IMAGE_SUBQUERY =
+  "EXISTS (SELECT 1 FROM attraction_images ai WHERE ai.attraction_id = a.id) AS has_image";
+
 export async function listPublicAttractions() {
-  const result = await query<AttractionRecord & { organization_name: string }>(
-    `SELECT a.*, o.name AS organization_name
+  const result = await query<AttractionRecord & { organization_name: string; has_image: boolean }>(
+    `SELECT a.*, o.name AS organization_name, ${HAS_IMAGE_SUBQUERY}
      FROM attractions a
      JOIN organizations o ON o.id = a.organization_id
      WHERE a.active = true
@@ -46,8 +60,8 @@ export async function listPublicAttractions() {
 }
 
 export async function listOrganizationAttractions(organizationId: string) {
-  const result = await query<AttractionRecord & { organization_name: string }>(
-    `SELECT a.*, o.name AS organization_name
+  const result = await query<AttractionRecord & { organization_name: string; has_image: boolean }>(
+    `SELECT a.*, o.name AS organization_name, ${HAS_IMAGE_SUBQUERY}
      FROM attractions a
      JOIN organizations o ON o.id = a.organization_id
      WHERE a.organization_id = $1
@@ -58,8 +72,8 @@ export async function listOrganizationAttractions(organizationId: string) {
 }
 
 export async function getAttractionById(id: string) {
-  const result = await query<AttractionRecord & { organization_name: string }>(
-    `SELECT a.*, o.name AS organization_name
+  const result = await query<AttractionRecord & { organization_name: string; has_image: boolean }>(
+    `SELECT a.*, o.name AS organization_name, ${HAS_IMAGE_SUBQUERY}
      FROM attractions a
      JOIN organizations o ON o.id = a.organization_id
      WHERE a.id = $1`,
@@ -97,7 +111,7 @@ export async function createAttraction(organizationId: string, input: CreateAttr
       qrToken,
     ]
   );
-  return toPublicAttraction(result.rows[0]);
+  return toPublicAttraction({ ...result.rows[0], has_image: false });
 }
 
 export async function updateAttraction(
@@ -130,7 +144,7 @@ export async function updateAttraction(
       id,
     ]
   );
-  return toPublicAttraction(result.rows[0]);
+  return toPublicAttraction({ ...result.rows[0], has_image: current.has_image });
 }
 
 export async function deactivateAttraction(organizationId: string, id: string) {
@@ -138,19 +152,90 @@ export async function deactivateAttraction(organizationId: string, id: string) {
   await query("UPDATE attractions SET active = false, updated_at = now() WHERE id = $1", [id]);
 }
 
-export async function setAttractionImageKey(
-  organizationId: string,
-  id: string,
-  imageKey: string | null
-) {
-  await getOwnedAttraction(organizationId, id);
-  await query("UPDATE attractions SET image_key = $1, updated_at = now() WHERE id = $2", [
-    imageKey,
-    id,
-  ]);
-}
-
 export async function getAttractionQrPayload(organizationId: string, id: string) {
   const attraction = await getOwnedAttraction(organizationId, id);
   return { id: attraction.id, token: attraction.qr_code_token, name: attraction.name };
+}
+
+export async function regenerateAttractionQrToken(organizationId: string, id: string) {
+  await getOwnedAttraction(organizationId, id);
+  const qrToken = generateQrToken();
+  await query("UPDATE attractions SET qr_code_token = $1, updated_at = now() WHERE id = $2", [
+    qrToken,
+    id,
+  ]);
+  return { id, token: qrToken };
+}
+
+export async function listAttractionImages(attractionId: string) {
+  const result = await query<AttractionImageRecord>(
+    "SELECT * FROM attraction_images WHERE attraction_id = $1 ORDER BY position ASC, created_at ASC",
+    [attractionId]
+  );
+  return result.rows;
+}
+
+export async function getCoverImage(attractionId: string) {
+  const result = await query<AttractionImageRecord>(
+    "SELECT * FROM attraction_images WHERE attraction_id = $1 ORDER BY position ASC, created_at ASC LIMIT 1",
+    [attractionId]
+  );
+  return result.rows[0] ?? null;
+}
+
+export async function getAttractionImageById(attractionId: string, imageId: string) {
+  const result = await query<AttractionImageRecord>(
+    "SELECT * FROM attraction_images WHERE id = $1 AND attraction_id = $2",
+    [imageId, attractionId]
+  );
+  const image = result.rows[0];
+  if (!image) throw ApiError.notFound("Imagem nao encontrada");
+  return image;
+}
+
+export async function addAttractionImage(
+  organizationId: string,
+  attractionId: string,
+  imageKey: string
+) {
+  await getOwnedAttraction(organizationId, attractionId);
+  const existing = await listAttractionImages(attractionId);
+  if (existing.length >= MAX_ATTRACTION_IMAGES) {
+    throw ApiError.badRequest(`Limite de ${MAX_ATTRACTION_IMAGES} fotos por atrativo`);
+  }
+  const nextPosition = existing.length > 0 ? Math.max(...existing.map((i) => i.position)) + 1 : 0;
+  const result = await query<AttractionImageRecord>(
+    "INSERT INTO attraction_images (attraction_id, image_key, position) VALUES ($1, $2, $3) RETURNING *",
+    [attractionId, imageKey, nextPosition]
+  );
+  return result.rows[0];
+}
+
+export async function removeAttractionImage(
+  organizationId: string,
+  attractionId: string,
+  imageId: string
+) {
+  await getOwnedAttraction(organizationId, attractionId);
+  const image = await getAttractionImageById(attractionId, imageId);
+  await query("DELETE FROM attraction_images WHERE id = $1", [imageId]);
+  return image;
+}
+
+export async function setCoverImage(organizationId: string, attractionId: string, imageId: string) {
+  await getOwnedAttraction(organizationId, attractionId);
+  const images = await listAttractionImages(attractionId);
+  const target = images.find((i) => i.id === imageId);
+  if (!target) throw ApiError.notFound("Imagem nao encontrada");
+  const current = images[0];
+  if (!current || current.id === target.id) return;
+
+  await query("UPDATE attraction_images SET position = $1 WHERE id = $2", [
+    current.position,
+    target.id,
+  ]);
+  await query("UPDATE attraction_images SET position = $1 WHERE id = $2", [
+    target.position,
+    current.id,
+  ]);
 }

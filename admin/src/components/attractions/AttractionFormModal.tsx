@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { Download, ImagePlus, Trash2 } from "lucide-react";
+import { Download, Plus, RefreshCw, Star, X } from "lucide-react";
 import { Modal } from "../ui/Modal";
 import { MapPicker } from "../ui/MapPicker";
-import { apiRequest, apiUpload, imageUrl, ApiError } from "../../lib/api";
+import { apiRequest, apiUpload, galleryImageUrl, ApiError } from "../../lib/api";
 import { useAuth } from "../../lib/auth-context";
 import { CATEGORY_LABEL, type Attraction } from "../../types";
+
+const MAX_IMAGES = 6;
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3333/api";
 
 interface AttractionFormModalProps {
   attraction: Attraction | null;
@@ -21,6 +24,10 @@ interface FormState {
   latitude: number;
   longitude: number;
   active: boolean;
+}
+
+interface GalleryImage {
+  id: string;
 }
 
 const DEFAULT_CENTER = { latitude: -26.2296, longitude: -51.0881 };
@@ -58,21 +65,56 @@ export function AttractionFormModal({
   const [form, setForm] = useState<FormState>(() => toFormState(attraction));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [images, setImages] = useState<GalleryImage[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [hasImage, setHasImage] = useState(attraction?.hasImage ?? false);
-  const [qrObjectUrl, setQrObjectUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [qrPreviewUrl, setQrPreviewUrl] = useState<string | null>(null);
+  const [loadingQr, setLoadingQr] = useState(false);
+  const [confirmRegenerate, setConfirmRegenerate] = useState(false);
 
   useEffect(() => {
     setForm(toFormState(attraction));
-    setHasImage(attraction?.hasImage ?? false);
   }, [attraction]);
 
   useEffect(() => {
+    if (!attraction) {
+      setImages([]);
+      return;
+    }
+    apiRequest<GalleryImage[]>(`/attractions/${attraction.id}/images`)
+      .then(setImages)
+      .catch(() => setImages([]));
+  }, [attraction]);
+
+  async function loadQrPreview() {
+    if (!attraction) return;
+    setLoadingQr(true);
+    try {
+      const response = await fetch(`${API_URL}/attractions/${attraction.id}/qrcode`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const blob = await response.blob();
+      setQrPreviewUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return URL.createObjectURL(blob);
+      });
+    } finally {
+      setLoadingQr(false);
+    }
+  }
+
+  useEffect(() => {
+    loadQrPreview();
     return () => {
-      if (qrObjectUrl) URL.revokeObjectURL(qrObjectUrl);
+      setQrPreviewUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
     };
-  }, [qrObjectUrl]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attraction?.id]);
 
   async function handleSubmit() {
     setSaving(true);
@@ -104,13 +146,17 @@ export function AttractionFormModal({
     }
   }
 
-  async function handleImageChange(file: File) {
+  async function handleAddImage(file: File) {
     if (!attraction) return;
     setUploadingImage(true);
     setError(null);
     try {
-      await apiUpload(`/attractions/${attraction.id}/image`, file, token);
-      setHasImage(true);
+      const created = await apiUpload<{ id: string }>(
+        `/attractions/${attraction.id}/images`,
+        file,
+        token
+      );
+      setImages((prev) => [...prev, { id: created.id }]);
       onImageChanged?.();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Nao foi possivel enviar a imagem.");
@@ -119,33 +165,60 @@ export function AttractionFormModal({
     }
   }
 
-  async function handleRemoveImage() {
+  async function handleDeleteImage(imageId: string) {
     if (!attraction) return;
-    setUploadingImage(true);
     try {
-      await apiRequest(`/attractions/${attraction.id}/image`, { method: "DELETE", token });
-      setHasImage(false);
+      await apiRequest(`/attractions/${attraction.id}/images/${imageId}`, {
+        method: "DELETE",
+        token,
+      });
+      setImages((prev) => prev.filter((i) => i.id !== imageId));
       onImageChanged?.();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Nao foi possivel remover a imagem.");
-    } finally {
-      setUploadingImage(false);
+    }
+  }
+
+  async function handleSetCover(imageId: string) {
+    if (!attraction) return;
+    try {
+      await apiRequest(`/attractions/${attraction.id}/images/${imageId}/cover`, {
+        method: "PUT",
+        token,
+      });
+      setImages((prev) => {
+        const target = prev.find((i) => i.id === imageId);
+        if (!target) return prev;
+        return [target, ...prev.filter((i) => i.id !== imageId)];
+      });
+      onImageChanged?.();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Nao foi possivel definir a capa.");
     }
   }
 
   async function handleDownloadQr() {
-    if (!attraction) return;
-    const response = await fetch(
-      `${import.meta.env.VITE_API_URL ?? "http://localhost:3333/api"}/attractions/${attraction.id}/qrcode`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    setQrObjectUrl(url);
+    if (!attraction || !qrPreviewUrl) return;
     const a = document.createElement("a");
-    a.href = url;
+    a.href = qrPreviewUrl;
     a.download = `qrcode-${attraction.name.toLowerCase().replace(/\s+/g, "-")}.png`;
     a.click();
+  }
+
+  async function handleRegenerateQr() {
+    if (!attraction) return;
+    setConfirmRegenerate(false);
+    setLoadingQr(true);
+    try {
+      await apiRequest(`/attractions/${attraction.id}/qrcode/regenerate`, {
+        method: "POST",
+        token,
+      });
+      await loadQrPreview();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Nao foi possivel gerar um novo QR Code.");
+      setLoadingQr(false);
+    }
   }
 
   return (
@@ -228,50 +301,111 @@ export function AttractionFormModal({
 
         {attraction ? (
           <div className="field form-grid--full">
-            <label>foto do atrativo</label>
-            <div className="attraction-image-uploader">
-              {hasImage ? (
-                <img src={`${imageUrl(attraction.id)}?t=${Date.now()}`} alt={attraction.name} />
-              ) : (
-                <div className="attraction-image-uploader__placeholder">
-                  <ImagePlus size={22} />
-                  <span>nenhuma foto enviada</span>
+            <label>fotos do atrativo</label>
+            <span className="field__hint">
+              ate {MAX_IMAGES} fotos — a primeira marcada com a estrela e a capa usada na lista do turista.
+              passe o mouse sobre uma foto para definir como capa ou remover.
+            </span>
+            <div className="attraction-gallery">
+              {images.map((image, index) => (
+                <div
+                  key={image.id}
+                  className={`attraction-gallery__item${index === 0 ? " attraction-gallery__item--cover" : ""}`}
+                >
+                  <img src={galleryImageUrl(attraction.id, image.id)} alt="" />
+                  {index === 0 ? <span className="attraction-gallery__cover-badge">capa</span> : null}
+                  <div className="attraction-gallery__item-actions">
+                    {index !== 0 ? (
+                      <button type="button" title="definir como capa" onClick={() => handleSetCover(image.id)}>
+                        <Star size={12} />
+                      </button>
+                    ) : null}
+                    <button type="button" title="remover" onClick={() => handleDeleteImage(image.id)}>
+                      <X size={12} />
+                    </button>
+                  </div>
                 </div>
-              )}
-              <div className="attraction-image-uploader__actions">
+              ))}
+              {images.length < MAX_IMAGES ? (
                 <button
-                  className="btn btn--ghost btn--sm"
                   type="button"
+                  className="attraction-gallery__add"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadingImage}
                 >
-                  {uploadingImage ? "enviando..." : hasImage ? "trocar foto" : "enviar foto"}
+                  {uploadingImage ? (
+                    <span>enviando...</span>
+                  ) : (
+                    <>
+                      <Plus size={20} />
+                      <span>{images.length === 0 ? "enviar foto" : "adicionar"}</span>
+                    </>
+                  )}
                 </button>
-                {hasImage ? (
-                  <button
-                    className="btn btn--danger btn--sm"
-                    type="button"
-                    onClick={handleRemoveImage}
-                    disabled={uploadingImage}
-                  >
-                    <Trash2 size={14} /> remover
-                  </button>
-                ) : null}
-                <button className="btn btn--ghost btn--sm" type="button" onClick={handleDownloadQr}>
-                  <Download size={14} /> baixar QR Code
-                </button>
+              ) : null}
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              hidden
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleAddImage(file);
+                e.target.value = "";
+              }}
+            />
+          </div>
+        ) : null}
+
+        {attraction ? (
+          <div className="field form-grid--full">
+            <label>QR Code</label>
+            <span className="field__hint">
+              o turista escaneia este codigo no local para carimbar a visita. regerar o codigo invalida
+              qualquer QR ja impresso — sera preciso imprimir e trocar a placa no local.
+            </span>
+            <div className="attraction-qr">
+              <div className="attraction-qr__preview">
+                {qrPreviewUrl ? <img src={qrPreviewUrl} alt="QR Code do atrativo" /> : null}
               </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                hidden
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleImageChange(file);
-                  e.target.value = "";
-                }}
-              />
+              <div className="attraction-qr__actions">
+                <button
+                  className="btn btn--ghost btn--sm"
+                  type="button"
+                  onClick={handleDownloadQr}
+                  disabled={loadingQr || !qrPreviewUrl}
+                >
+                  <Download size={14} /> baixar PNG
+                </button>
+                {confirmRegenerate ? (
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button
+                      className="btn btn--danger btn--sm"
+                      type="button"
+                      onClick={handleRegenerateQr}
+                    >
+                      confirmar
+                    </button>
+                    <button
+                      className="btn btn--ghost btn--sm"
+                      type="button"
+                      onClick={() => setConfirmRegenerate(false)}
+                    >
+                      cancelar
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className="btn btn--ghost btn--sm"
+                    type="button"
+                    onClick={() => setConfirmRegenerate(true)}
+                    disabled={loadingQr}
+                  >
+                    <RefreshCw size={14} /> regenerar codigo
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         ) : null}

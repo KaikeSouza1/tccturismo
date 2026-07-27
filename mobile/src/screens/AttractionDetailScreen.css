@@ -113,6 +113,18 @@
   }
 }
 
+.detail-gallery {
+  display: flex;
+  gap: var(--space-3);
+  overflow-x: auto;
+  padding: 0 var(--space-5);
+  scrollbar-width: none;
+}
+
+.detail-gallery::-webkit-scrollbar {
+  display: none;
+}
+
 .detail-title {
   font-size: 30px;
   text-align: center;

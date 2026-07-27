@@ -17,7 +17,7 @@ import "./ScanScreen.css";
 
 type ScanState =
   | { kind: "scanning" }
-  | { kind: "processing" }
+  | { kind: "processing"; recognizedName?: string }
   | { kind: "success"; visit: Visit; unlockedAchievements: Achievement[]; frameDataUrl: string }
   | { kind: "queued"; attractionName?: string }
   | { kind: "error"; message: string };
@@ -42,9 +42,17 @@ export function ScanScreen() {
     async (raw: string, frameDataUrl: string) => {
       if (processingRef.current || !token) return;
       processingRef.current = true;
-      setState({ kind: "processing" });
 
       const { attractionId, qrToken } = parseQrPayload(raw);
+
+      // Reconhece o local pelo cache local na hora, antes mesmo da resposta
+      // do servidor chegar — o turista ve na hora qual lugar acabou de
+      // encontrar, em vez de so um texto generico de "confirmando".
+      const recognized = attractionId
+        ? (await getCachedAttractions()).find((a) => a.id === attractionId)
+        : undefined;
+      setState({ kind: "processing", recognizedName: recognized?.name });
+
       const position = await getCurrentPosition();
 
       if (!position) {
@@ -79,9 +87,7 @@ export function ScanScreen() {
           return;
         }
 
-        const cached = attractionId
-          ? (await getCachedAttractions()).find((a) => a.id === attractionId)
-          : undefined;
+        const cached = recognized;
 
         if (cached) {
           const distance = distanceInMeters(
@@ -139,6 +145,14 @@ export function ScanScreen() {
                     : "Iniciando camera..."}
               </p>
             </div>
+            {state.kind === "processing" && state.recognizedName ? (
+              <div className="scan-camera__recognized pop-in">
+                <InkStamp variant="success" size={40} rotate={-6}>
+                  <PinIcon size={15} />
+                </InkStamp>
+                <span>voce encontrou: {state.recognizedName}</span>
+              </div>
+            ) : null}
             {cameraError ? <div className="scan-camera__error">{cameraError}</div> : null}
           </div>
         ) : (

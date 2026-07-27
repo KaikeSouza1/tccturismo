@@ -29,7 +29,6 @@ export interface AttractionRecord {
   longitude: number;
   radius_meters: number;
   qr_code_token: string;
-  image_key: string | null;
   active: boolean;
   created_at: Date;
   updated_at: Date;
