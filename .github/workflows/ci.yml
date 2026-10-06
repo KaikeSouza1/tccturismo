@@ -10,6 +10,21 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    # src/config/env.ts falha rapido na subida se faltar variavel obrigatoria
+    # (ver backend/README.md) — os testes nunca abrem conexao real com banco
+    # ou R2, mas o modulo e importado transitivamente, entao precisa de
+    # valores (mesmo que falsos) so pra passar da validacao.
+    env:
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: ci_test
+      JWT_SECRET: ci-test-secret
+      R2_ACCOUNT_ID: ci-test
+      R2_ACCESS_KEY_ID: ci-test
+      R2_SECRET_ACCESS_KEY: ci-test
+      R2_BUCKET_NAME: ci-test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
