@@ -149,14 +149,14 @@ const FIXED_ACHIEVEMENTS = [
 ];
 
 async function seedOrganization(): Promise<string> {
-  const existing = await query<{ id: string }>("SELECT id FROM organizations WHERE slug = $1", [
+  const existing = await query<{ id: string }>("SELECT id FROM organizacoes WHERE slug = $1", [
     DEFAULT_ORG.slug,
   ]);
   if (existing.rowCount) {
     return existing.rows[0].id;
   }
   const result = await query<{ id: string }>(
-    "INSERT INTO organizations (name, slug) VALUES ($1, $2) RETURNING id",
+    "INSERT INTO organizacoes (nome, slug) VALUES ($1, $2) RETURNING id",
     [DEFAULT_ORG.name, DEFAULT_ORG.slug]
   );
   console.log(`+ organizacao criada: ${DEFAULT_ORG.name}`);
@@ -182,14 +182,14 @@ async function seedUsers(organizationId: string) {
   ];
 
   for (const u of [...admins, ...tourists]) {
-    const existing = await query("SELECT id FROM users WHERE email = $1", [u.email]);
+    const existing = await query("SELECT id FROM usuarios WHERE email = $1", [u.email]);
     if (existing.rowCount) {
       console.log(`- usuario ${u.email} ja existe, pulando`);
       continue;
     }
     const passwordHash = await hashPassword(u.password);
     await query(
-      "INSERT INTO users (name, email, password_hash, role, organization_id) VALUES ($1, $2, $3, $4, $5)",
+      "INSERT INTO usuarios (nome, email, senha_hash, papel, organizacao_id) VALUES ($1, $2, $3, $4, $5)",
       [u.name, u.email, passwordHash, u.role, u.role === "admin" ? organizationId : null]
     );
     console.log(`+ usuario criado: ${u.email} / senha: ${u.password}`);
@@ -199,11 +199,11 @@ async function seedUsers(organizationId: string) {
 async function seedPlatformAdmin() {
   const email = "kaikeesmael02@gmail.com";
   const passwordHash = await hashPassword("082572abc");
-  const existing = await query<{ id: string }>("SELECT id FROM users WHERE email = $1", [email]);
+  const existing = await query<{ id: string }>("SELECT id FROM usuarios WHERE email = $1", [email]);
 
   if (existing.rowCount) {
     await query(
-      "UPDATE users SET role = 'platform_admin', organization_id = NULL, password_hash = $1, updated_at = now() WHERE email = $2",
+      "UPDATE usuarios SET papel = 'platform_admin', organizacao_id = NULL, senha_hash = $1, atualizado_em = now() WHERE email = $2",
       [passwordHash, email]
     );
     console.log(`+ conta existente ${email} promovida a administrador da plataforma`);
@@ -211,7 +211,7 @@ async function seedPlatformAdmin() {
   }
 
   await query(
-    "INSERT INTO users (name, email, password_hash, role, organization_id) VALUES ($1, $2, $3, 'platform_admin', NULL)",
+    "INSERT INTO usuarios (nome, email, senha_hash, papel, organizacao_id) VALUES ($1, $2, $3, 'platform_admin', NULL)",
     ["Kaike Esmael", email, passwordHash]
   );
   console.log(`+ administrador da plataforma criado: ${email}`);
@@ -219,14 +219,14 @@ async function seedPlatformAdmin() {
 
 async function seedAttractions(organizationId: string) {
   for (const a of SEED_ATTRACTIONS) {
-    const existing = await query("SELECT id FROM attractions WHERE name = $1", [a.name]);
+    const existing = await query("SELECT id FROM atrativos WHERE nome = $1", [a.name]);
     if (existing.rowCount) {
       console.log(`- atrativo "${a.name}" ja existe, pulando`);
       continue;
     }
     const qrToken = `TCC-${crypto.randomBytes(12).toString("hex")}`;
     await query(
-      `INSERT INTO attractions (organization_id, name, description, category, latitude, longitude, qr_code_token)
+      `INSERT INTO atrativos (organizacao_id, nome, descricao, categoria, latitude, longitude, token_qr_code)
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [organizationId, a.name, a.description, a.category, a.latitude, a.longitude, qrToken]
     );
@@ -236,13 +236,13 @@ async function seedAttractions(organizationId: string) {
 
 async function seedAchievements() {
   for (const ach of FIXED_ACHIEVEMENTS) {
-    const existing = await query("SELECT id FROM achievements WHERE code = $1", [ach.code]);
+    const existing = await query("SELECT id FROM conquistas WHERE codigo = $1", [ach.code]);
     if (existing.rowCount) {
       console.log(`- conquista "${ach.code}" ja existe, pulando`);
       continue;
     }
     await query(
-      `INSERT INTO achievements (code, name, description, icon, criteria_type, criteria_value, points)
+      `INSERT INTO conquistas (codigo, nome, descricao, icone, tipo_criterio, valor_criterio, pontos)
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [ach.code, ach.name, ach.description, ach.icon, ach.criteria_type, ach.criteria_value, ach.points]
     );

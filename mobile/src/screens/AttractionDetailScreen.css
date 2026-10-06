@@ -31,20 +31,6 @@
   padding: var(--space-3) 0 var(--space-4);
 }
 
-.detail-hero__coords {
-  font-family: var(--font-hand);
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--color-ink-300);
-  margin-top: var(--space-3);
-  transition: color 0.3s ease;
-  text-align: center;
-}
-
-.detail-hero__coords--visible {
-  color: var(--color-trail-700);
-}
-
 @property --compass-progress {
   syntax: "<number>";
   inherits: false;

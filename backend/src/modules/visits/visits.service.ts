@@ -20,6 +20,27 @@ interface ListVisitsFilter {
   pageSize?: number;
 }
 
+const ATTRACTION_COLUMNS = `
+  id, nome AS name, descricao AS description, categoria AS category,
+  latitude, longitude, raio_metros AS radius_meters, token_qr_code AS qr_code_token,
+  ativo AS active, criado_em AS created_at, atualizado_em AS updated_at,
+  organizacao_id AS organization_id
+`;
+
+const VISIT_COLUMNS = `
+  v.id, v.usuario_id AS user_id, v.atrativo_id AS attraction_id, v.latitude, v.longitude,
+  v.distancia_metros AS distance_meters, v.chave_foto AS photo_key,
+  v.registrado_em_cliente AS client_recorded_at, v.sincronizado_em AS synced_at,
+  v.criado_em AS created_at
+`;
+
+const VISIT_RETURNING = `
+  id, usuario_id AS user_id, atrativo_id AS attraction_id, latitude, longitude,
+  distancia_metros AS distance_meters, chave_foto AS photo_key,
+  registrado_em_cliente AS client_recorded_at, sincronizado_em AS synced_at,
+  criado_em AS created_at
+`;
+
 function toPublicVisit(visit: VisitRecord & { attraction_name?: string }) {
   return {
     id: visit.id,
@@ -36,7 +57,7 @@ function toPublicVisit(visit: VisitRecord & { attraction_name?: string }) {
 
 export async function registerVisit(userId: string, input: RegisterVisitInput) {
   const attractionResult = await query<AttractionRecord>(
-    "SELECT * FROM attractions WHERE qr_code_token = $1 AND active = true",
+    `SELECT ${ATTRACTION_COLUMNS} FROM atrativos WHERE token_qr_code = $1 AND ativo = true`,
     [input.qrToken]
   );
   const attraction = attractionResult.rows[0];
@@ -58,9 +79,9 @@ export async function registerVisit(userId: string, input: RegisterVisitInput) {
   }
 
   const result = await query<VisitRecord>(
-    `INSERT INTO visits (user_id, attraction_id, latitude, longitude, distance_meters, client_recorded_at)
+    `INSERT INTO visitas (usuario_id, atrativo_id, latitude, longitude, distancia_metros, registrado_em_cliente)
      VALUES ($1, $2, $3, $4, $5, $6)
-     RETURNING *`,
+     RETURNING ${VISIT_RETURNING}`,
     [
       userId,
       attraction.id,
@@ -72,7 +93,18 @@ export async function registerVisit(userId: string, input: RegisterVisitInput) {
   );
 
   const visit = result.rows[0];
-  const unlockedAchievements = await evaluateAchievementsForUser(userId);
+
+  // A visita ja foi persistida com sucesso nesse ponto — uma falha aqui
+  // (bug na engine, erro de banco pontual etc) nunca pode fazer o turista
+  // ver a visita como rejeitada. Na pior das hipoteses, o desbloqueio de
+  // conquistas fica para a proxima visita (a engine reavalia tudo que ainda
+  // nao foi desbloqueado a cada chamada).
+  let unlockedAchievements: Awaited<ReturnType<typeof evaluateAchievementsForUser>> = [];
+  try {
+    unlockedAchievements = await evaluateAchievementsForUser(userId);
+  } catch (err) {
+    console.error(`Falha ao avaliar conquistas para o usuario ${userId} apos a visita ${visit.id}:`, err);
+  }
 
   return {
     visit: { ...toPublicVisit(visit), attractionName: attraction.name },
@@ -92,18 +124,21 @@ export async function registerVisit(userId: string, input: RegisterVisitInput) {
 
 export async function listMyVisits(userId: string) {
   const result = await query<VisitRecord & { attraction_name: string }>(
-    `SELECT v.*, a.name AS attraction_name
-     FROM visits v
-     JOIN attractions a ON a.id = v.attraction_id
-     WHERE v.user_id = $1
-     ORDER BY v.created_at DESC`,
+    `SELECT ${VISIT_COLUMNS}, a.nome AS attraction_name
+     FROM visitas v
+     JOIN atrativos a ON a.id = v.atrativo_id
+     WHERE v.usuario_id = $1
+     ORDER BY v.criado_em DESC`,
     [userId]
   );
   return result.rows.map(toPublicVisit);
 }
 
 export async function getOwnedVisit(userId: string, visitId: string) {
-  const result = await query<VisitRecord>("SELECT * FROM visits WHERE id = $1", [visitId]);
+  const result = await query<VisitRecord>(
+    `SELECT ${VISIT_RETURNING} FROM visitas WHERE id = $1`,
+    [visitId]
+  );
   const visit = result.rows[0];
   if (!visit || visit.user_id !== userId) {
     throw ApiError.notFound("Visita nao encontrada");
@@ -113,7 +148,7 @@ export async function getOwnedVisit(userId: string, visitId: string) {
 
 export async function setVisitPhotoKey(userId: string, visitId: string, photoKey: string) {
   await getOwnedVisit(userId, visitId);
-  await query("UPDATE visits SET photo_key = $1 WHERE id = $2", [photoKey, visitId]);
+  await query("UPDATE visitas SET chave_foto = $1 WHERE id = $2", [photoKey, visitId]);
 }
 
 export async function listVisits(filter: ListVisitsFilter) {
@@ -121,19 +156,19 @@ export async function listVisits(filter: ListVisitsFilter) {
   const params: unknown[] = [];
 
   params.push(filter.organizationId);
-  conditions.push(`a.organization_id = $${params.length}`);
+  conditions.push(`a.organizacao_id = $${params.length}`);
 
   if (filter.attractionId) {
     params.push(filter.attractionId);
-    conditions.push(`v.attraction_id = $${params.length}`);
+    conditions.push(`v.atrativo_id = $${params.length}`);
   }
   if (filter.from) {
     params.push(filter.from);
-    conditions.push(`v.created_at >= $${params.length}`);
+    conditions.push(`v.criado_em >= $${params.length}`);
   }
   if (filter.to) {
     params.push(filter.to);
-    conditions.push(`v.created_at <= $${params.length}`);
+    conditions.push(`v.criado_em <= $${params.length}`);
   }
 
   const whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
@@ -146,12 +181,12 @@ export async function listVisits(filter: ListVisitsFilter) {
   const result = await query<
     VisitRecord & { attraction_name: string; tourist_name: string }
   >(
-    `SELECT v.*, a.name AS attraction_name, u.name AS tourist_name
-     FROM visits v
-     JOIN attractions a ON a.id = v.attraction_id
-     JOIN users u ON u.id = v.user_id
+    `SELECT ${VISIT_COLUMNS}, a.nome AS attraction_name, u.nome AS tourist_name
+     FROM visitas v
+     JOIN atrativos a ON a.id = v.atrativo_id
+     JOIN usuarios u ON u.id = v.usuario_id
      ${whereClause}
-     ORDER BY v.created_at DESC
+     ORDER BY v.criado_em DESC
      LIMIT $${params.length - 1} OFFSET $${params.length}`,
     params
   );

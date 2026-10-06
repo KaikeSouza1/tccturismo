@@ -81,3 +81,33 @@
 .achievement-card--locked .achievement-card__points {
   color: var(--color-ink-300);
 }
+
+.achievement-card__progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.achievement-card__progress-track {
+  flex: 1;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--color-paper-dim);
+  overflow: hidden;
+}
+
+.achievement-card__progress-fill {
+  height: 100%;
+  background: var(--color-blue-600);
+  border-radius: var(--radius-pill);
+  transition: width 0.3s ease;
+}
+
+.achievement-card__progress-label {
+  font-family: var(--font-hand);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-ink-500);
+  white-space: nowrap;
+}

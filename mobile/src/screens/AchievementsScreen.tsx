@@ -65,6 +65,22 @@ export function AchievementsScreen() {
                         carimbado em {new Date(achievement.unlockedAt).toLocaleDateString("pt-BR")}
                       </span>
                     ) : null}
+                    {!achievement.unlocked && achievement.progress && achievement.progress.target > 0 ? (
+                      <div className="achievement-card__progress">
+                        <div className="achievement-card__progress-track">
+                          <div
+                            className="achievement-card__progress-fill"
+                            style={{
+                              width: `${Math.min(100, (achievement.progress.current / achievement.progress.target) * 100)}%`,
+                            }}
+                          />
+                        </div>
+                        <span className="achievement-card__progress-label">
+                          {Math.min(achievement.progress.current, achievement.progress.target)}/
+                          {achievement.progress.target}
+                        </span>
+                      </div>
+                    ) : null}
                   </div>
                   <span className="achievement-card__points">+{achievement.points}</span>
                 </JournalCard>

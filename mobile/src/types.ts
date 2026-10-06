@@ -53,6 +53,7 @@ export interface Achievement {
   criteriaValue: Record<string, unknown>;
   unlocked: boolean;
   unlockedAt: string | null;
+  progress: { current: number; target: number } | null;
 }
 
 export interface LeaderboardEntry {
@@ -61,6 +62,13 @@ export interface LeaderboardEntry {
   name: string;
   points: number;
   achievementsCount: number;
+}
+
+export interface OrganizationLeaderboardEntry {
+  rank: number;
+  id: string;
+  name: string;
+  visitsCount: number;
 }
 
 export interface PendingVisit {

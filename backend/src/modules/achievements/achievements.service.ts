@@ -3,6 +3,7 @@ import { ApiError } from "../../utils/ApiError";
 import type { AchievementCriteriaType, AchievementRecord } from "../../types";
 import { MAX_ACHIEVEMENTS_PER_ORGANIZATION } from "./achievement-icons";
 import { ORG_CRITERIA_TYPES } from "./achievements.validation";
+import { buildEvaluationContext, computeProgress, type AchievementProgress } from "./achievements.engine";
 
 interface AchievementInput {
   name: string;
@@ -15,7 +16,23 @@ interface AchievementInput {
 
 type AchievementWithOrg = AchievementRecord & { organization_name: string | null };
 
-function toPublicAchievement(achievement: AchievementWithOrg, unlockedAt: Date | null = null) {
+const ACHIEVEMENT_COLUMNS = `
+  a.id, a.codigo AS code, a.nome AS name, a.descricao AS description, a.icone AS icon,
+  a.tipo_criterio AS criteria_type, a.valor_criterio AS criteria_value, a.pontos AS points,
+  a.criado_em AS created_at, a.organizacao_id AS organization_id
+`;
+
+const ACHIEVEMENT_RETURNING = `
+  id, codigo AS code, nome AS name, descricao AS description, icone AS icon,
+  tipo_criterio AS criteria_type, valor_criterio AS criteria_value, pontos AS points,
+  criado_em AS created_at, organizacao_id AS organization_id
+`;
+
+function toPublicAchievement(
+  achievement: AchievementWithOrg,
+  unlockedAt: Date | null = null,
+  progress?: AchievementProgress
+) {
   return {
     id: achievement.id,
     code: achievement.code,
@@ -29,38 +46,44 @@ function toPublicAchievement(achievement: AchievementWithOrg, unlockedAt: Date |
     organizationName: achievement.organization_name,
     unlocked: unlockedAt !== null,
     unlockedAt,
+    // so calculado para conquistas ainda bloqueadas (ver listAchievementsForUser) —
+    // depois de desbloqueada, "quanto falta" deixa de fazer sentido.
+    progress: progress ?? null,
   };
 }
 
 export async function listAchievementsForUser(userId: string) {
   const result = await query<AchievementWithOrg & { unlocked_at: Date | null }>(
-    `SELECT a.*, o.name AS organization_name, ua.unlocked_at
-     FROM achievements a
-     LEFT JOIN organizations o ON o.id = a.organization_id
-     LEFT JOIN user_achievements ua ON ua.achievement_id = a.id AND ua.user_id = $1
-     ORDER BY a.organization_id NULLS FIRST, a.points ASC, a.name ASC`,
+    `SELECT ${ACHIEVEMENT_COLUMNS}, o.nome AS organization_name, ua.desbloqueado_em AS unlocked_at
+     FROM conquistas a
+     LEFT JOIN organizacoes o ON o.id = a.organizacao_id
+     LEFT JOIN usuario_conquistas ua ON ua.conquista_id = a.id AND ua.usuario_id = $1
+     ORDER BY a.organizacao_id NULLS FIRST, a.pontos ASC, a.nome ASC`,
     [userId]
   );
-  return result.rows.map((row) => toPublicAchievement(row, row.unlocked_at));
+  const ctx = await buildEvaluationContext(userId);
+  return result.rows.map((row) =>
+    toPublicAchievement(row, row.unlocked_at, row.unlocked_at ? undefined : computeProgress(row, ctx))
+  );
 }
 
 export async function listFixedAchievements() {
   const result = await query<AchievementWithOrg>(
-    `SELECT a.*, NULL::text AS organization_name
-     FROM achievements a
-     WHERE a.organization_id IS NULL
-     ORDER BY a.points ASC, a.name ASC`
+    `SELECT ${ACHIEVEMENT_COLUMNS}, NULL::text AS organization_name
+     FROM conquistas a
+     WHERE a.organizacao_id IS NULL
+     ORDER BY a.pontos ASC, a.nome ASC`
   );
   return result.rows.map((row) => toPublicAchievement(row));
 }
 
 export async function listAchievementsForAdmin(organizationId: string) {
   const result = await query<AchievementWithOrg>(
-    `SELECT a.*, o.name AS organization_name
-     FROM achievements a
-     LEFT JOIN organizations o ON o.id = a.organization_id
-     WHERE a.organization_id IS NULL OR a.organization_id = $1
-     ORDER BY a.organization_id NULLS FIRST, a.points ASC, a.name ASC`,
+    `SELECT ${ACHIEVEMENT_COLUMNS}, o.nome AS organization_name
+     FROM conquistas a
+     LEFT JOIN organizacoes o ON o.id = a.organizacao_id
+     WHERE a.organizacao_id IS NULL OR a.organizacao_id = $1
+     ORDER BY a.organizacao_id NULLS FIRST, a.pontos ASC, a.nome ASC`,
     [organizationId]
   );
   return result.rows.map((row) => toPublicAchievement(row));
@@ -89,7 +112,7 @@ async function assertCriteriaValueIsValid(
       throw ApiError.badRequest("criteriaValue.category e obrigatorio");
     }
     const exists = await query(
-      "SELECT 1 FROM attractions WHERE organization_id = $1 AND category = $2 LIMIT 1",
+      "SELECT 1 FROM atrativos WHERE organizacao_id = $1 AND categoria = $2 LIMIT 1",
       [organizationId, category]
     );
     if (!exists.rowCount) {
@@ -104,7 +127,7 @@ async function assertCriteriaValueIsValid(
       throw ApiError.badRequest("criteriaValue.attractionIds deve ser uma lista nao vazia");
     }
     const owned = await query<{ id: string }>(
-      "SELECT id FROM attractions WHERE organization_id = $1 AND id = ANY($2::uuid[])",
+      "SELECT id FROM atrativos WHERE organizacao_id = $1 AND id = ANY($2::uuid[])",
       [organizationId, attractionIds]
     );
     if (owned.rowCount !== attractionIds.length) {
@@ -121,7 +144,7 @@ export async function createOrganizationAchievement(
   await assertCriteriaValueIsValid(organizationId, input.criteriaType, input.criteriaValue);
 
   const countResult = await query<{ count: string }>(
-    "SELECT COUNT(*)::text AS count FROM achievements WHERE organization_id = $1",
+    "SELECT COUNT(*)::text AS count FROM conquistas WHERE organizacao_id = $1",
     [organizationId]
   );
   if (Number(countResult.rows[0].count) >= MAX_ACHIEVEMENTS_PER_ORGANIZATION) {
@@ -133,9 +156,9 @@ export async function createOrganizationAchievement(
   const code = `org_${organizationId.slice(0, 8)}_${Date.now().toString(36)}`;
 
   const result = await query<AchievementRecord>(
-    `INSERT INTO achievements (organization_id, code, name, description, icon, criteria_type, criteria_value, points)
+    `INSERT INTO conquistas (organizacao_id, codigo, nome, descricao, icone, tipo_criterio, valor_criterio, pontos)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-     RETURNING *`,
+     RETURNING ${ACHIEVEMENT_RETURNING}`,
     [
       organizationId,
       code,
@@ -152,7 +175,7 @@ export async function createOrganizationAchievement(
 
 async function getOwnedOrganizationAchievement(organizationId: string, achievementId: string) {
   const result = await query<AchievementRecord>(
-    "SELECT * FROM achievements WHERE id = $1 AND organization_id = $2",
+    `SELECT ${ACHIEVEMENT_RETURNING} FROM conquistas WHERE id = $1 AND organizacao_id = $2`,
     [achievementId, organizationId]
   );
   const achievement = result.rows[0];
@@ -174,10 +197,10 @@ export async function updateOrganizationAchievement(
   await assertCriteriaValueIsValid(organizationId, criteriaType, criteriaValue);
 
   const result = await query<AchievementRecord>(
-    `UPDATE achievements SET
-       name = $1, description = $2, icon = $3, criteria_type = $4, criteria_value = $5, points = $6
+    `UPDATE conquistas SET
+       nome = $1, descricao = $2, icone = $3, tipo_criterio = $4, valor_criterio = $5, pontos = $6
      WHERE id = $7
-     RETURNING *`,
+     RETURNING ${ACHIEVEMENT_RETURNING}`,
     [
       input.name ?? current.name,
       input.description ?? current.description,
@@ -193,7 +216,7 @@ export async function updateOrganizationAchievement(
 
 export async function deleteOrganizationAchievement(organizationId: string, achievementId: string) {
   await getOwnedOrganizationAchievement(organizationId, achievementId);
-  await query("DELETE FROM achievements WHERE id = $1", [achievementId]);
+  await query("DELETE FROM conquistas WHERE id = $1", [achievementId]);
 }
 
 export async function getLeaderboard(limit = 20) {
@@ -203,12 +226,12 @@ export async function getLeaderboard(limit = 20) {
     points: number;
     achievements_count: string;
   }>(
-    `SELECT u.id, u.name, u.points, COUNT(ua.id)::text AS achievements_count
-     FROM users u
-     LEFT JOIN user_achievements ua ON ua.user_id = u.id
-     WHERE u.role = 'tourist'
+    `SELECT u.id, u.nome AS name, u.pontos AS points, COUNT(ua.id)::text AS achievements_count
+     FROM usuarios u
+     LEFT JOIN usuario_conquistas ua ON ua.usuario_id = u.id
+     WHERE u.papel = 'tourist'
      GROUP BY u.id
-     ORDER BY u.points DESC, u.name ASC
+     ORDER BY u.pontos DESC, u.nome ASC
      LIMIT $1`,
     [limit]
   );
@@ -219,5 +242,26 @@ export async function getLeaderboard(limit = 20) {
     name: row.name,
     points: row.points,
     achievementsCount: Number(row.achievements_count),
+  }));
+}
+
+export async function getOrganizationLeaderboard(organizationId: string, limit = 20) {
+  const result = await query<{ id: string; name: string; visit_count: string }>(
+    `SELECT u.id, u.nome AS name, COUNT(v.id)::text AS visit_count
+     FROM usuarios u
+     JOIN visitas v ON v.usuario_id = u.id
+     JOIN atrativos a ON a.id = v.atrativo_id
+     WHERE a.organizacao_id = $1 AND u.papel = 'tourist'
+     GROUP BY u.id
+     ORDER BY COUNT(v.id) DESC, u.nome ASC
+     LIMIT $2`,
+    [organizationId, limit]
+  );
+
+  return result.rows.map((row, index) => ({
+    rank: index + 1,
+    id: row.id,
+    name: row.name,
+    visitsCount: Number(row.visit_count),
   }));
 }

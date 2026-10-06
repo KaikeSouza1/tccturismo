@@ -12,7 +12,6 @@ import { AppShell } from "../components/layout/AppShell";
 import { JournalCard } from "../components/ui/JournalCard";
 import { InkStamp } from "../components/ui/InkStamp";
 import { Polaroid } from "../components/ui/Polaroid";
-import { WashiTape } from "../components/ui/WashiTape";
 import { AttractionArt } from "../components/ui/AttractionArt";
 import { ChevronLeftIcon, ChevronRightIcon, CompassIcon, PinIcon, RouteIcon } from "../icons";
 import "./AttractionDetailScreen.css";
@@ -43,7 +42,6 @@ export function AttractionDetailScreen() {
   const [routeDistance, setRouteDistance] = useState<number | null>(null);
   const [pastVisits, setPastVisits] = useState<Visit[]>([]);
   const [loading, setLoading] = useState(true);
-  const [coordsRevealed, setCoordsRevealed] = useState(false);
   const [liveDistance, setLiveDistance] = useState<number | null>(null);
   const [insideRadius, setInsideRadius] = useState(false);
   const distanceRef = useRef<number | null>(null);
@@ -159,23 +157,9 @@ export function AttractionDetailScreen() {
       ) : (
         <div className="detail-content">
           <div className="detail-hero">
-            <WashiTape
-              color="kraft"
-              rotate={8}
-              width={78}
-              top={-6}
-              right={44}
-              interactive
-              onReveal={() => setCoordsRevealed(true)}
-            />
             <Polaroid size={168} tilt={-2} caption={CATEGORY_LABEL[attraction.category ?? ""] ?? "atrativo"}>
               <AttractionArt attraction={attraction} size={168} />
             </Polaroid>
-            <p className={`detail-hero__coords ${coordsRevealed ? "detail-hero__coords--visible" : ""}`}>
-              {coordsRevealed
-                ? `coordenadas exatas: ${attraction.latitude.toFixed(4)}, ${attraction.longitude.toFixed(4)}`
-                : "puxe a fita para revelar as coordenadas"}
-            </p>
 
             {approaching ? (
               <div className="detail-compass">

@@ -1,6 +1,24 @@
 import fs from "node:fs";
 import path from "node:path";
 import { pool } from "../config/db";
+import type { PoolClient } from "pg";
+
+/**
+ * A tabela de controle de migrations foi ela propria renomeada (de
+ * schema_migrations/name/applied_at para migracoes_esquema/nome/aplicado_em)
+ * pela migration 006. Resolve o nome atual via to_regclass em vez de
+ * hardcoded, porque a migration 006 faz esse rename no meio da mesma
+ * transacao em que o runner registra a propria aplicacao dela — nesse
+ * instante o nome "atual" muda de uma chamada para a proxima.
+ */
+async function trackingTable(client: PoolClient): Promise<{ table: string; name: string; appliedAt: string }> {
+  const result = await client.query<{ exists: boolean }>(
+    "SELECT to_regclass('public.migracoes_esquema') IS NOT NULL AS exists"
+  );
+  return result.rows[0].exists
+    ? { table: "migracoes_esquema", name: "nome", appliedAt: "aplicado_em" }
+    : { table: "schema_migrations", name: "name", appliedAt: "applied_at" };
+}
 
 async function migrate() {
   const migrationsDir = path.join(__dirname, "migrations");
@@ -16,8 +34,9 @@ async function migrate() {
     `);
 
     for (const file of files) {
+      const before = await trackingTable(client);
       const alreadyApplied = await client.query(
-        "SELECT 1 FROM schema_migrations WHERE name = $1",
+        `SELECT 1 FROM ${before.table} WHERE ${before.name} = $1`,
         [file]
       );
       if (alreadyApplied.rowCount) {
@@ -30,7 +49,8 @@ async function migrate() {
       await client.query("BEGIN");
       try {
         await client.query(sql);
-        await client.query("INSERT INTO schema_migrations (name) VALUES ($1)", [file]);
+        const after = await trackingTable(client);
+        await client.query(`INSERT INTO ${after.table} (${after.name}) VALUES ($1)`, [file]);
         await client.query("COMMIT");
         console.log(`  ok`);
       } catch (err) {

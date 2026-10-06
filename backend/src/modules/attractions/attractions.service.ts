@@ -45,27 +45,44 @@ function toPublicAttraction(
   };
 }
 
+const ATTRACTION_COLUMNS = `
+  a.id, a.nome AS name, a.descricao AS description, a.categoria AS category,
+  a.latitude, a.longitude, a.raio_metros AS radius_meters, a.token_qr_code AS qr_code_token,
+  a.ativo AS active, a.criado_em AS created_at, a.atualizado_em AS updated_at,
+  a.organizacao_id AS organization_id
+`;
+
+const ATTRACTION_RETURNING = `
+  id, nome AS name, descricao AS description, categoria AS category,
+  latitude, longitude, raio_metros AS radius_meters, token_qr_code AS qr_code_token,
+  ativo AS active, criado_em AS created_at, atualizado_em AS updated_at,
+  organizacao_id AS organization_id
+`;
+
 const HAS_IMAGE_SUBQUERY =
-  "EXISTS (SELECT 1 FROM attraction_images ai WHERE ai.attraction_id = a.id) AS has_image";
+  "EXISTS (SELECT 1 FROM atrativo_imagens ai WHERE ai.atrativo_id = a.id) AS has_image";
+
+const IMAGE_COLUMNS =
+  "id, atrativo_id AS attraction_id, chave_imagem AS image_key, posicao AS position";
 
 export async function listPublicAttractions() {
   const result = await query<AttractionRecord & { organization_name: string; has_image: boolean }>(
-    `SELECT a.*, o.name AS organization_name, ${HAS_IMAGE_SUBQUERY}
-     FROM attractions a
-     JOIN organizations o ON o.id = a.organization_id
-     WHERE a.active = true
-     ORDER BY a.name`
+    `SELECT ${ATTRACTION_COLUMNS}, o.nome AS organization_name, ${HAS_IMAGE_SUBQUERY}
+     FROM atrativos a
+     JOIN organizacoes o ON o.id = a.organizacao_id
+     WHERE a.ativo = true
+     ORDER BY a.nome`
   );
   return result.rows.map(toPublicAttraction);
 }
 
 export async function listOrganizationAttractions(organizationId: string) {
   const result = await query<AttractionRecord & { organization_name: string; has_image: boolean }>(
-    `SELECT a.*, o.name AS organization_name, ${HAS_IMAGE_SUBQUERY}
-     FROM attractions a
-     JOIN organizations o ON o.id = a.organization_id
-     WHERE a.organization_id = $1
-     ORDER BY a.name`,
+    `SELECT ${ATTRACTION_COLUMNS}, o.nome AS organization_name, ${HAS_IMAGE_SUBQUERY}
+     FROM atrativos a
+     JOIN organizacoes o ON o.id = a.organizacao_id
+     WHERE a.organizacao_id = $1
+     ORDER BY a.nome`,
     [organizationId]
   );
   return result.rows.map(toPublicAttraction);
@@ -73,9 +90,9 @@ export async function listOrganizationAttractions(organizationId: string) {
 
 export async function getAttractionById(id: string) {
   const result = await query<AttractionRecord & { organization_name: string; has_image: boolean }>(
-    `SELECT a.*, o.name AS organization_name, ${HAS_IMAGE_SUBQUERY}
-     FROM attractions a
-     JOIN organizations o ON o.id = a.organization_id
+    `SELECT ${ATTRACTION_COLUMNS}, o.nome AS organization_name, ${HAS_IMAGE_SUBQUERY}
+     FROM atrativos a
+     JOIN organizacoes o ON o.id = a.organizacao_id
      WHERE a.id = $1`,
     [id]
   );
@@ -97,9 +114,9 @@ async function getOwnedAttraction(organizationId: string, id: string) {
 export async function createAttraction(organizationId: string, input: CreateAttractionInput) {
   const qrToken = generateQrToken();
   const result = await query<AttractionRecord>(
-    `INSERT INTO attractions (organization_id, name, description, category, latitude, longitude, radius_meters, qr_code_token)
+    `INSERT INTO atrativos (organizacao_id, nome, descricao, categoria, latitude, longitude, raio_metros, token_qr_code)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-     RETURNING *`,
+     RETURNING ${ATTRACTION_RETURNING}`,
     [
       organizationId,
       input.name,
@@ -122,17 +139,17 @@ export async function updateAttraction(
   const current = await getOwnedAttraction(organizationId, id);
 
   const result = await query<AttractionRecord>(
-    `UPDATE attractions SET
-       name = $1,
-       description = $2,
-       category = $3,
+    `UPDATE atrativos SET
+       nome = $1,
+       descricao = $2,
+       categoria = $3,
        latitude = $4,
        longitude = $5,
-       radius_meters = $6,
-       active = $7,
-       updated_at = now()
+       raio_metros = $6,
+       ativo = $7,
+       atualizado_em = now()
      WHERE id = $8
-     RETURNING *`,
+     RETURNING ${ATTRACTION_RETURNING}`,
     [
       input.name ?? current.name,
       input.description ?? current.description,
@@ -149,7 +166,7 @@ export async function updateAttraction(
 
 export async function deactivateAttraction(organizationId: string, id: string) {
   await getOwnedAttraction(organizationId, id);
-  await query("UPDATE attractions SET active = false, updated_at = now() WHERE id = $1", [id]);
+  await query("UPDATE atrativos SET ativo = false, atualizado_em = now() WHERE id = $1", [id]);
 }
 
 export async function getAttractionQrPayload(organizationId: string, id: string) {
@@ -160,7 +177,7 @@ export async function getAttractionQrPayload(organizationId: string, id: string)
 export async function regenerateAttractionQrToken(organizationId: string, id: string) {
   await getOwnedAttraction(organizationId, id);
   const qrToken = generateQrToken();
-  await query("UPDATE attractions SET qr_code_token = $1, updated_at = now() WHERE id = $2", [
+  await query("UPDATE atrativos SET token_qr_code = $1, atualizado_em = now() WHERE id = $2", [
     qrToken,
     id,
   ]);
@@ -169,7 +186,7 @@ export async function regenerateAttractionQrToken(organizationId: string, id: st
 
 export async function listAttractionImages(attractionId: string) {
   const result = await query<AttractionImageRecord>(
-    "SELECT * FROM attraction_images WHERE attraction_id = $1 ORDER BY position ASC, created_at ASC",
+    `SELECT ${IMAGE_COLUMNS} FROM atrativo_imagens WHERE atrativo_id = $1 ORDER BY posicao ASC, criado_em ASC`,
     [attractionId]
   );
   return result.rows;
@@ -177,7 +194,7 @@ export async function listAttractionImages(attractionId: string) {
 
 export async function getCoverImage(attractionId: string) {
   const result = await query<AttractionImageRecord>(
-    "SELECT * FROM attraction_images WHERE attraction_id = $1 ORDER BY position ASC, created_at ASC LIMIT 1",
+    `SELECT ${IMAGE_COLUMNS} FROM atrativo_imagens WHERE atrativo_id = $1 ORDER BY posicao ASC, criado_em ASC LIMIT 1`,
     [attractionId]
   );
   return result.rows[0] ?? null;
@@ -185,7 +202,7 @@ export async function getCoverImage(attractionId: string) {
 
 export async function getAttractionImageById(attractionId: string, imageId: string) {
   const result = await query<AttractionImageRecord>(
-    "SELECT * FROM attraction_images WHERE id = $1 AND attraction_id = $2",
+    `SELECT ${IMAGE_COLUMNS} FROM atrativo_imagens WHERE id = $1 AND atrativo_id = $2`,
     [imageId, attractionId]
   );
   const image = result.rows[0];
@@ -205,7 +222,7 @@ export async function addAttractionImage(
   }
   const nextPosition = existing.length > 0 ? Math.max(...existing.map((i) => i.position)) + 1 : 0;
   const result = await query<AttractionImageRecord>(
-    "INSERT INTO attraction_images (attraction_id, image_key, position) VALUES ($1, $2, $3) RETURNING *",
+    `INSERT INTO atrativo_imagens (atrativo_id, chave_imagem, posicao) VALUES ($1, $2, $3) RETURNING ${IMAGE_COLUMNS}`,
     [attractionId, imageKey, nextPosition]
   );
   return result.rows[0];
@@ -218,7 +235,7 @@ export async function removeAttractionImage(
 ) {
   await getOwnedAttraction(organizationId, attractionId);
   const image = await getAttractionImageById(attractionId, imageId);
-  await query("DELETE FROM attraction_images WHERE id = $1", [imageId]);
+  await query("DELETE FROM atrativo_imagens WHERE id = $1", [imageId]);
   return image;
 }
 
@@ -230,11 +247,11 @@ export async function setCoverImage(organizationId: string, attractionId: string
   const current = images[0];
   if (!current || current.id === target.id) return;
 
-  await query("UPDATE attraction_images SET position = $1 WHERE id = $2", [
+  await query("UPDATE atrativo_imagens SET posicao = $1 WHERE id = $2", [
     current.position,
     target.id,
   ]);
-  await query("UPDATE attraction_images SET position = $1 WHERE id = $2", [
+  await query("UPDATE atrativo_imagens SET posicao = $1 WHERE id = $2", [
     target.position,
     current.id,
   ]);

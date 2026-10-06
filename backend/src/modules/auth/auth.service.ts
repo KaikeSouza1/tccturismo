@@ -18,9 +18,13 @@ interface LoginInput {
 type UserWithOrg = UserRecord & { organization_name: string | null };
 
 const USER_SELECT = `
-  SELECT u.*, o.name AS organization_name
-  FROM users u
-  LEFT JOIN organizations o ON o.id = u.organization_id
+  SELECT
+    u.id, u.nome AS name, u.email, u.senha_hash AS password_hash, u.papel AS role,
+    u.organizacao_id AS organization_id, u.pontos AS points,
+    u.criado_em AS created_at, u.atualizado_em AS updated_at,
+    o.nome AS organization_name
+  FROM usuarios u
+  LEFT JOIN organizacoes o ON o.id = u.organizacao_id
 `;
 
 function toPublicUser(user: UserWithOrg) {
@@ -37,7 +41,7 @@ function toPublicUser(user: UserWithOrg) {
 }
 
 export async function registerUser(input: RegisterInput) {
-  const existing = await query<UserRecord>("SELECT id FROM users WHERE email = $1", [
+  const existing = await query<UserRecord>("SELECT id FROM usuarios WHERE email = $1", [
     input.email.toLowerCase(),
   ]);
   if (existing.rowCount) {
@@ -47,9 +51,11 @@ export async function registerUser(input: RegisterInput) {
   const passwordHash = await hashPassword(input.password);
 
   const result = await query<UserRecord>(
-    `INSERT INTO users (name, email, password_hash, role)
+    `INSERT INTO usuarios (nome, email, senha_hash, papel)
      VALUES ($1, $2, $3, 'tourist')
-     RETURNING *`,
+     RETURNING id, nome AS name, email, senha_hash AS password_hash, papel AS role,
+       organizacao_id AS organization_id, pontos AS points,
+       criado_em AS created_at, atualizado_em AS updated_at`,
     [input.name, input.email.toLowerCase(), passwordHash]
   );
 

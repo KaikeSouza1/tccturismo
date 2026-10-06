@@ -1,7 +1,7 @@
 import { query } from "../../config/db";
 import type { AchievementCriteriaType, AchievementRecord } from "../../types";
 
-interface EvaluationContext {
+export interface EvaluationContext {
   distinctAttractionIds: Set<string>;
   distinctCategoriesVisited: Set<string>;
   distinctOrganizationsVisited: Set<string>;
@@ -12,77 +12,102 @@ interface EvaluationContext {
   orgActiveAttractionIdsByCategory: Map<string, Map<string, Set<string>>>;
 }
 
+export interface AchievementProgress {
+  current: number;
+  target: number;
+}
+
 /**
  * Padrao Strategy (GAMMA et al., 1994): cada tipo de criterio de conquista
- * e avaliado por uma estrategia intercambiavel, permitindo adicionar novas
- * regras de gamificacao sem alterar a engine em si. Conquistas fixas da
- * plataforma (organization_id nulo) sao avaliadas com base em estatisticas
- * globais; conquistas criadas por uma organizacao sao restritas ao universo
- * de atrativos dessa organizacao.
+ * tem sua propria forma de calcular "quanto falta" a partir do mesmo
+ * contexto de avaliacao, permitindo adicionar novas regras de gamificacao
+ * sem alterar a engine em si. Conquistas fixas da plataforma
+ * (organization_id nulo) sao avaliadas com base em estatisticas globais;
+ * conquistas criadas por uma organizacao sao restritas ao universo de
+ * atrativos dessa organizacao.
+ *
+ * O desbloqueio (evaluateAchievementsForUser) e o progresso parcial exibido
+ * na tela de conquistas (listAchievementsForUser, em achievements.service.ts)
+ * usam exatamente esta mesma funcao como unica fonte de verdade — current
+ * >= target e a unica definicao de "satisfeito" em todo o sistema.
  */
-type CriteriaEvaluator = (
+type ProgressCalculator = (
   criteriaValue: Record<string, unknown>,
   ctx: EvaluationContext,
   achievement: AchievementRecord
-) => boolean;
+) => AchievementProgress;
 
-const evaluators: Record<AchievementCriteriaType, CriteriaEvaluator> = {
+export const progressCalculators: Record<AchievementCriteriaType, ProgressCalculator> = {
   attractions_visited_count: (criteria, ctx, achievement) => {
     const target = Number(criteria.count ?? 0);
     if (achievement.organization_id) {
       const orgIds = ctx.orgActiveAttractionIds.get(achievement.organization_id) ?? new Set();
-      const visitedInOrg = [...ctx.distinctAttractionIds].filter((id) => orgIds.has(id));
-      return visitedInOrg.length >= target;
+      const current = [...ctx.distinctAttractionIds].filter((id) => orgIds.has(id)).length;
+      return { current, target };
     }
-    return ctx.distinctAttractionIds.size >= target;
+    return { current: ctx.distinctAttractionIds.size, target };
   },
   specific_attractions: (criteria, ctx) => {
     const required = (criteria.attractionIds as string[] | undefined) ?? [];
-    if (required.length === 0) return false;
-    return required.every((id) => ctx.distinctAttractionIds.has(id));
+    const current = required.filter((id) => ctx.distinctAttractionIds.has(id)).length;
+    return { current, target: required.length };
   },
   all_attractions: (_criteria, ctx, achievement) => {
     if (achievement.organization_id) {
-      const orgIds = ctx.orgActiveAttractionIds.get(achievement.organization_id);
-      if (!orgIds || orgIds.size === 0) return false;
-      return [...orgIds].every((id) => ctx.distinctAttractionIds.has(id));
+      const orgIds = ctx.orgActiveAttractionIds.get(achievement.organization_id) ?? new Set();
+      const current = [...orgIds].filter((id) => ctx.distinctAttractionIds.has(id)).length;
+      return { current, target: orgIds.size };
     }
-    if (ctx.totalActiveAttractions === 0) return false;
-    return ctx.distinctAttractionIds.size >= ctx.totalActiveAttractions;
+    return { current: ctx.distinctAttractionIds.size, target: ctx.totalActiveAttractions };
   },
   category_complete: (criteria, ctx, achievement) => {
     const category = criteria.category as string | undefined;
-    if (!category) return false;
-    const idsInCategory = achievement.organization_id
-      ? ctx.orgActiveAttractionIdsByCategory.get(achievement.organization_id)?.get(category)
-      : ctx.activeAttractionIdsByCategory.get(category);
-    if (!idsInCategory || idsInCategory.size === 0) return false;
-    return [...idsInCategory].every((id) => ctx.distinctAttractionIds.has(id));
+    const idsInCategory = category
+      ? (achievement.organization_id
+          ? ctx.orgActiveAttractionIdsByCategory.get(achievement.organization_id)?.get(category)
+          : ctx.activeAttractionIdsByCategory.get(category)) ?? new Set<string>()
+      : new Set<string>();
+    const current = [...idsInCategory].filter((id) => ctx.distinctAttractionIds.has(id)).length;
+    return { current, target: idsInCategory.size };
   },
   points_total: (criteria, ctx) => {
-    const target = Number(criteria.points ?? 0);
-    return ctx.currentPoints >= target;
+    return { current: ctx.currentPoints, target: Number(criteria.points ?? 0) };
   },
   distinct_categories_count: (criteria, ctx) => {
-    const target = Number(criteria.count ?? 0);
-    return ctx.distinctCategoriesVisited.size >= target;
+    return { current: ctx.distinctCategoriesVisited.size, target: Number(criteria.count ?? 0) };
   },
   distinct_organizations_count: (criteria, ctx) => {
-    const target = Number(criteria.count ?? 0);
-    return ctx.distinctOrganizationsVisited.size >= target;
+    return { current: ctx.distinctOrganizationsVisited.size, target: Number(criteria.count ?? 0) };
   },
 };
 
-async function buildEvaluationContext(userId: string): Promise<EvaluationContext> {
+export function computeProgress(
+  achievement: AchievementRecord,
+  ctx: EvaluationContext
+): AchievementProgress {
+  const calculator = progressCalculators[achievement.criteria_type];
+  return calculator(achievement.criteria_value, ctx, achievement);
+}
+
+/**
+ * target 0 (ex: achievement mal configurada com lista/categoria vazia) nunca
+ * conta como satisfeita, mesmo que current tambem seja 0 — evita desbloqueio
+ * acidental de uma conquista sem criterio real.
+ */
+export function isProgressSatisfied(progress: AchievementProgress): boolean {
+  return progress.target > 0 && progress.current >= progress.target;
+}
+
+export async function buildEvaluationContext(userId: string): Promise<EvaluationContext> {
   const [visitsResult, attractionsResult, userResult] = await Promise.all([
     query<{ attraction_id: string }>(
-      "SELECT DISTINCT attraction_id FROM visits WHERE user_id = $1",
+      "SELECT DISTINCT atrativo_id AS attraction_id FROM visitas WHERE usuario_id = $1",
       [userId]
     ),
     query<{ id: string; category: string | null; organization_id: string }>(
-      "SELECT id, category, organization_id FROM attractions WHERE active = true"
+      "SELECT id, categoria AS category, organizacao_id AS organization_id FROM atrativos WHERE ativo = true"
     ),
-    query<{ points: number }>("SELECT points FROM users WHERE id = $1", [userId]),
+    query<{ points: number }>("SELECT pontos AS points FROM usuarios WHERE id = $1", [userId]),
   ]);
 
   const attractionMeta = new Map<string, { category: string | null; organizationId: string }>();
@@ -146,10 +171,13 @@ export async function evaluateAchievementsForUser(
   userId: string
 ): Promise<AchievementRecord[]> {
   const lockedAchievements = await query<AchievementRecord>(
-    `SELECT a.* FROM achievements a
+    `SELECT a.id, a.codigo AS code, a.nome AS name, a.descricao AS description, a.icone AS icon,
+       a.tipo_criterio AS criteria_type, a.valor_criterio AS criteria_value, a.pontos AS points,
+       a.criado_em AS created_at, a.organizacao_id AS organization_id
+     FROM conquistas a
      WHERE NOT EXISTS (
-       SELECT 1 FROM user_achievements ua
-       WHERE ua.achievement_id = a.id AND ua.user_id = $1
+       SELECT 1 FROM usuario_conquistas ua
+       WHERE ua.conquista_id = a.id AND ua.usuario_id = $1
      )`,
     [userId]
   );
@@ -162,15 +190,14 @@ export async function evaluateAchievementsForUser(
   const unlocked: AchievementRecord[] = [];
 
   for (const achievement of lockedAchievements.rows) {
-    const evaluator = evaluators[achievement.criteria_type];
-    const satisfied = evaluator(achievement.criteria_value, ctx, achievement);
-    if (!satisfied) continue;
+    const progress = computeProgress(achievement, ctx);
+    if (!isProgressSatisfied(progress)) continue;
 
     await query(
-      "INSERT INTO user_achievements (user_id, achievement_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+      "INSERT INTO usuario_conquistas (usuario_id, conquista_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
       [userId, achievement.id]
     );
-    await query("UPDATE users SET points = points + $1, updated_at = now() WHERE id = $2", [
+    await query("UPDATE usuarios SET pontos = pontos + $1, atualizado_em = now() WHERE id = $2", [
       achievement.points,
       userId,
     ]);

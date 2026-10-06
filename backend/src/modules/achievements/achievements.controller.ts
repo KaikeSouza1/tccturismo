@@ -7,6 +7,7 @@ import {
   createOrganizationAchievement,
   deleteOrganizationAchievement,
   getLeaderboard,
+  getOrganizationLeaderboard,
   listAchievementsForAdmin,
   listAchievementsForUser,
   listFixedAchievements,
@@ -23,7 +24,14 @@ export async function listMine(req: Request, res: Response) {
 
 export async function leaderboard(req: Request, res: Response) {
   const limit = req.query.limit ? Number(req.query.limit) : 20;
-  const ranking = await getLeaderboard(limit);
+  const organizationId =
+    typeof req.query.organizationId === "string" && req.query.organizationId.length > 0
+      ? req.query.organizationId
+      : undefined;
+
+  const ranking = organizationId
+    ? await getOrganizationLeaderboard(organizationId, limit)
+    : await getLeaderboard(limit);
   res.json(ranking);
 }
 

@@ -29,11 +29,11 @@ export async function listOrganizationsWithStats() {
     admin_email: string | null;
     attractions_count: string;
   }>(`
-    SELECT o.id, o.name, o.slug, o.created_at,
-      (SELECT u.email FROM users u WHERE u.organization_id = o.id AND u.role = 'admin' ORDER BY u.created_at ASC LIMIT 1) AS admin_email,
-      (SELECT COUNT(*) FROM attractions a WHERE a.organization_id = o.id)::text AS attractions_count
-    FROM organizations o
-    ORDER BY o.created_at DESC
+    SELECT o.id, o.nome AS name, o.slug, o.criado_em AS created_at,
+      (SELECT u.email FROM usuarios u WHERE u.organizacao_id = o.id AND u.papel = 'admin' ORDER BY u.criado_em ASC LIMIT 1) AS admin_email,
+      (SELECT COUNT(*) FROM atrativos a WHERE a.organizacao_id = o.id)::text AS attractions_count
+    FROM organizacoes o
+    ORDER BY o.criado_em DESC
   `);
   return result.rows.map((row) => ({
     id: row.id,
@@ -51,14 +51,14 @@ export async function createOrganizationWithAdmin(input: CreateOrganizationInput
     throw ApiError.badRequest("Nome de organizacao invalido");
   }
 
-  const existingOrg = await query<{ id: string }>("SELECT id FROM organizations WHERE slug = $1", [
+  const existingOrg = await query<{ id: string }>("SELECT id FROM organizacoes WHERE slug = $1", [
     slug,
   ]);
   if (existingOrg.rowCount) {
     throw ApiError.conflict("Ja existe uma organizacao com um nome muito parecido");
   }
 
-  const existingUser = await query<{ id: string }>("SELECT id FROM users WHERE email = $1", [
+  const existingUser = await query<{ id: string }>("SELECT id FROM usuarios WHERE email = $1", [
     input.adminEmail.toLowerCase(),
   ]);
   if (existingUser.rowCount) {
@@ -66,14 +66,14 @@ export async function createOrganizationWithAdmin(input: CreateOrganizationInput
   }
 
   const orgResult = await query<OrganizationRecord>(
-    "INSERT INTO organizations (name, slug) VALUES ($1, $2) RETURNING *",
+    "INSERT INTO organizacoes (nome, slug) VALUES ($1, $2) RETURNING id, nome AS name, slug, criado_em AS created_at",
     [input.name, slug]
   );
   const organization = orgResult.rows[0];
 
   const passwordHash = await hashPassword(input.adminPassword);
   await query(
-    `INSERT INTO users (name, email, password_hash, role, organization_id)
+    `INSERT INTO usuarios (nome, email, senha_hash, papel, organizacao_id)
      VALUES ($1, $2, $3, 'admin', $4)`,
     [input.adminName, input.adminEmail.toLowerCase(), passwordHash, organization.id]
   );

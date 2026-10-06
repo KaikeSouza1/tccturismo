@@ -1,32 +1,72 @@
-# React + TypeScript + Vite
+# Mobile — Turismo Local
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Aplicativo React + TypeScript voltado ao turista: autenticação, leitura de
+QR Code, registro de visitas por geolocalização (geofencing), gamificação
+(conquistas, pontos, ranking) e funcionamento offline. Empacotado como APK
+Android via [Capacitor](https://capacitorjs.com/).
 
-Currently, two official plugins are available:
+## Pré-requisitos
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Node.js 20+
+- Para gerar o APK: Android Studio + SDK (JDK 21 — usar o JBR que acompanha
+  o Android Studio, não o Java do PATH)
+- O [backend](../backend) rodando (local ou já publicado) acessível pela
+  URL configurada em `VITE_API_URL`
 
-## React Compiler
+## Instalação
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Variáveis de ambiente
+
+- `.env` — usado por `npm run dev` (ambiente local)
+- `.env.production` — usado por `npm run build` (empacotado no APK)
+
+Ambos têm uma única chave:
+
+```
+VITE_API_URL=http://localhost:3333/api
+```
+
+Aponte para a URL real do backend em produção no `.env.production` antes de
+gerar o APK.
+
+## Rodando em desenvolvimento
+
+```bash
+npm run dev
+```
+
+Como o app é essencialmente uma aplicação web (Capacitor empacota a mesma
+base web), dá pra desenvolver e testar a maior parte das telas direto no
+navegador, sem precisar gerar um APK a cada mudança — só os plugins nativos
+(câmera, GPS, etc.) exigem o app rodando no dispositivo/emulador.
+
+## Testes
+
+```bash
+npm test
+```
+
+## Gerando o APK
+
+```bash
+npm run build
+npx cap sync android
+cd android
+./gradlew assembleDebug
+```
+
+APK gerado em `android/app/build/outputs/apk/debug/app-debug.apk`.
+
+## Arquitetura
+
+- `src/screens/` — uma tela por rota
+- `src/components/` — componentes de UI e layout reutilizáveis
+- `src/lib/` — API client, geolocalização, fila offline/sincronização,
+  OSRM (distância real por rota), etc.
+- Offline-first: visitas registradas sem conexão ficam em fila local
+  (`src/lib/offline-queue.ts`) e são sincronizadas automaticamente quando a
+  conexão volta (`src/lib/sync.ts`).

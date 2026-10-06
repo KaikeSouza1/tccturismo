@@ -3,7 +3,7 @@ import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { useAuth } from "../lib/auth-context";
 import { apiRequest, apiUploadBlob, ApiError } from "../lib/api";
 import { useQrScanner } from "../lib/useQrScanner";
-import { getCurrentPosition } from "../lib/geolocation";
+import { getCurrentPositionDetailed, locationErrorMessage } from "../lib/geolocation";
 import { distanceInMeters } from "../lib/geo";
 import { getCachedAttractions, enqueuePendingVisit } from "../lib/offline-queue";
 import { haptics } from "../lib/haptics";
@@ -82,12 +82,12 @@ export function ScanScreen() {
         : undefined;
       setState({ kind: "processing", recognizedName: recognized?.name });
 
-      const position = await getCurrentPosition();
+      const { coords: position, errorReason } = await getCurrentPositionDetailed();
 
       if (!position) {
         setState({
           kind: "error",
-          message: "Nao foi possivel obter sua localizacao. Ative o GPS e tente novamente.",
+          message: locationErrorMessage(errorReason ?? "unknown"),
         });
         return;
       }

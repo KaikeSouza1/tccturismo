@@ -9,10 +9,10 @@ export async function getSummary(organizationId: string) {
   }>(
     `
     SELECT
-      (SELECT COUNT(*) FROM visits v JOIN attractions a ON a.id = v.attraction_id WHERE a.organization_id = $1)::text AS total_visits,
-      (SELECT COUNT(DISTINCT v.user_id) FROM visits v JOIN attractions a ON a.id = v.attraction_id WHERE a.organization_id = $1)::text AS total_tourists,
-      (SELECT COUNT(*) FROM attractions WHERE organization_id = $1 AND active = true)::text AS total_attractions,
-      (SELECT COUNT(*) FROM visits v JOIN attractions a ON a.id = v.attraction_id WHERE a.organization_id = $1 AND v.created_at >= date_trunc('day', now()))::text AS visits_today
+      (SELECT COUNT(*) FROM visitas v JOIN atrativos a ON a.id = v.atrativo_id WHERE a.organizacao_id = $1)::text AS total_visits,
+      (SELECT COUNT(DISTINCT v.usuario_id) FROM visitas v JOIN atrativos a ON a.id = v.atrativo_id WHERE a.organizacao_id = $1)::text AS total_tourists,
+      (SELECT COUNT(*) FROM atrativos WHERE organizacao_id = $1 AND ativo = true)::text AS total_attractions,
+      (SELECT COUNT(*) FROM visitas v JOIN atrativos a ON a.id = v.atrativo_id WHERE a.organizacao_id = $1 AND v.criado_em >= date_trunc('day', now()))::text AS visits_today
   `,
     [organizationId]
   );
@@ -33,11 +33,11 @@ export async function getVisitsByAttraction(organizationId: string) {
     visit_count: string;
   }>(
     `
-    SELECT a.id AS attraction_id, a.name AS attraction_name, COUNT(v.id)::text AS visit_count
-    FROM attractions a
-    LEFT JOIN visits v ON v.attraction_id = a.id
-    WHERE a.active = true AND a.organization_id = $1
-    GROUP BY a.id, a.name
+    SELECT a.id AS attraction_id, a.nome AS attraction_name, COUNT(v.id)::text AS visit_count
+    FROM atrativos a
+    LEFT JOIN visitas v ON v.atrativo_id = a.id
+    WHERE a.ativo = true AND a.organizacao_id = $1
+    GROUP BY a.id, a.nome
     ORDER BY COUNT(v.id) DESC
   `,
     [organizationId]
@@ -59,10 +59,10 @@ export async function getVisitsOverTime(
 ) {
   const result = await query<{ bucket: Date; visit_count: string }>(
     `
-    SELECT date_trunc($1, v.created_at) AS bucket, COUNT(*)::text AS visit_count
-    FROM visits v
-    JOIN attractions a ON a.id = v.attraction_id
-    WHERE a.organization_id = $2 AND v.created_at >= now() - ($3 || ' days')::interval
+    SELECT date_trunc($1, v.criado_em) AS bucket, COUNT(*)::text AS visit_count
+    FROM visitas v
+    JOIN atrativos a ON a.id = v.atrativo_id
+    WHERE a.organizacao_id = $2 AND v.criado_em >= now() - ($3 || ' days')::interval
     GROUP BY bucket
     ORDER BY bucket ASC
     `,
@@ -83,11 +83,11 @@ export async function getHeatmapPoints(organizationId: string) {
     visit_count: string;
   }>(
     `
-    SELECT a.latitude, a.longitude, a.name AS attraction_name, COUNT(v.id)::text AS visit_count
-    FROM attractions a
-    LEFT JOIN visits v ON v.attraction_id = a.id
-    WHERE a.active = true AND a.organization_id = $1
-    GROUP BY a.id, a.latitude, a.longitude, a.name
+    SELECT a.latitude, a.longitude, a.nome AS attraction_name, COUNT(v.id)::text AS visit_count
+    FROM atrativos a
+    LEFT JOIN visitas v ON v.atrativo_id = a.id
+    WHERE a.ativo = true AND a.organizacao_id = $1
+    GROUP BY a.id, a.latitude, a.longitude, a.nome
   `,
     [organizationId]
   );
